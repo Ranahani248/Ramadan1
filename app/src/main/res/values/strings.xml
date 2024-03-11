@@ -1,0 +1,29 @@
+<resources>
+    <string name="app_name">Ramadan1</string>
+    <!-- Add this array of city names to your resources (res/values/strings.xml) -->
+    <string-array name="pakistan_cities">
+        <item>Select city</item>
+        <item>Rawalpindi</item>
+        <item>Islamabad</item>
+        <item>Karachi</item>
+        <item>Lahore</item>
+        <item>Faisalabad</item>
+        <item>Multan</item>
+        <item>Gujranwala</item>
+        <item>Peshawar</item>
+        <item>Quetta</item>
+        <item>Hyderabad</item>
+        <item>Shekhupura</item>
+        <item>Abbottabad</item>
+        <item>Attock</item>
+        <item>Bahawalpur</item>
+        <item>Larkana</item>
+        <item>Mardan</item>
+        <item>Gujrat</item>
+        <item>Sialkot</item>
+
+    </string-array>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+
+</resources>
