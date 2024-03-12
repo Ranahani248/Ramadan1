@@ -1,9 +1,11 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
 
+
     <item
-        android:id="@+id/menu_prayer"
-        android:icon="@drawable/mosque"
-        android:title="Prayer" />
+        android:id="@+id/menu_home"
+        android:icon="@drawable/baseline_home_24"
+        android:title="Home" />
+
 
     <item
         android:id="@+id/menu_compass"
@@ -11,9 +13,9 @@
         android:title="Compass" />
 
     <item
-        android:id="@+id/menu_home"
-        android:icon="@drawable/baseline_home_24"
-        android:title="Home" />
+        android:id="@+id/menu_prayer"
+        android:icon="@drawable/mosque"
+        android:title="Prayer" />
 
     <item
         android:id="@+id/menu_Sehri_time"
@@ -23,7 +25,7 @@
     <item
         android:id="@+id/menu_calendar"
         android:icon="@drawable/baseline_settings_24"
-        android:title="Calendar"
+        android:title="Setting"
         />
 
 </menu>

@@ -1,7 +1,9 @@
 package com.example.ramadan1;
 
+
 import android.annotation.SuppressLint;
 import android.app.AlarmManager;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.TimePickerDialog;
 import android.content.Context;
@@ -14,6 +16,7 @@ import android.os.Vibrator;
 import android.preference.PreferenceManager;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.CompoundButton;
 import android.widget.RelativeLayout;
 import android.widget.Switch;
 import android.widget.TextView;
@@ -24,6 +27,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.app.NotificationManagerCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -33,14 +37,13 @@ import java.util.List;
 
 public class NotificationActivity extends AppCompatActivity {
 
+    TextView namz_name;
+
     Switch notification_off_on_Switch;
     RelativeLayout pre_time_alarm_layout, custom_time_alarm_layout;
     private final List<soundsModel> dataList1 = new ArrayList<>();
     private SharedPreferences sharedPreferences;
-    private static final String VIBRATION_SWITCH_KEY = "vibration_switch_key";
-
     private Switch vibrationSwitch;
-    private Vibrator vibrator;
     private String sehriTime;
     private String iftariTime;
 
@@ -49,6 +52,7 @@ public class NotificationActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_notification);
         Toolbar toolbar = findViewById(R.id.toolbar);
+        namz_name = findViewById(R.id.namz_name);
 
         setSupportActionBar(toolbar);
         // Enable the Up button in the ActionBar
@@ -79,13 +83,7 @@ public class NotificationActivity extends AppCompatActivity {
         TextView islamic_date = findViewById(R.id.Islamic_date);
         vibrationSwitch = findViewById(R.id.vibration_off);
         notification_off_on_Switch = findViewById(R.id.notification_off_on_Switch);
-        vibrationSwitch.setChecked(loadVibrationState());
-        vibrationSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            saveVibrationState(isChecked);
-            SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(NotificationActivity.this).edit();
-            editor.putBoolean("vibrate_pref", isChecked);
-            editor.apply();
-        });
+
         english_date1.setText(DateHelper.getCurrentDateEnglish());
         islamic_date.setText(DateHelper.getCurrentDateIslamic());
 
@@ -130,6 +128,19 @@ public class NotificationActivity extends AppCompatActivity {
                 showTimePicker();
             }
         });
+
+        notification_off_on_Switch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                handleNotificationSwitch(isChecked);
+            }
+        });
+
+        // Inside onCreate method
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        boolean notificationsEnabled = prefs.getBoolean("notifications_enabled", true);
+        notification_off_on_Switch.setChecked(notificationsEnabled);
+
     }
 
     private void populateDataList() {
@@ -177,7 +188,6 @@ public class NotificationActivity extends AppCompatActivity {
         if (alarmTime.before(Calendar.getInstance())) {
             alarmTime.add(Calendar.DAY_OF_MONTH, 1);
 
-
         }
 
         Intent alarmIntent = new Intent(this, AlarmReceiver.class);
@@ -199,24 +209,16 @@ public class NotificationActivity extends AppCompatActivity {
                 AlarmManager.AlarmClockInfo alarmClockInfo =
                         new AlarmManager.AlarmClockInfo(alarmTime.getTimeInMillis(), pendingIntent);
                 alarmManager.setAlarmClock(alarmClockInfo, pendingIntent);
-            } else {
-                alarmManager.setExact(AlarmManager.RTC_WAKEUP, alarmTime.getTimeInMillis(), pendingIntent);
             }
+             else {
+                alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, alarmTime.getTimeInMillis(), pendingIntent);
+             }
         } finally {
             // Release the WakeLock after scheduling the alarm
             if (wakeLock.isHeld()) {
                 wakeLock.release();
             }
         }
-    }
-    private void saveVibrationState(boolean isVibrationOn) {
-        SharedPreferences.Editor editor = sharedPreferences.edit();
-        editor.putBoolean(VIBRATION_SWITCH_KEY, isVibrationOn);
-        editor.apply();
-    }
-
-    private boolean loadVibrationState() {
-        return sharedPreferences.getBoolean(VIBRATION_SWITCH_KEY, true); // Default to true if not found
     }
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
@@ -227,4 +229,17 @@ public class NotificationActivity extends AppCompatActivity {
         }
         return super.onOptionsItemSelected(item);
     }
+
+    private void handleNotificationSwitch(boolean isChecked) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        prefs.edit().putBoolean("notifications_enabled", isChecked).apply();
+    }
+    public static boolean areNotificationsEnabled(Context context) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+        // Assuming default is true, change if necessary
+        return prefs.getBoolean("notifications_enabled", true);
+    }
+
+
+
 }

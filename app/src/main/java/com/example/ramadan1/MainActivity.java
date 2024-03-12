@@ -1,30 +1,46 @@
 package com.example.ramadan1;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.content.ContextCompat;
+import androidx.core.app.ActivityCompat;
 
+import android.Manifest;
+import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.Intent;
-import android.content.res.ColorStateList;
+import android.content.pm.PackageManager;
+import android.hardware.SensorManager;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.view.MenuItem;
+import android.widget.Toast;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.navigation.NavigationBarView;
 
 import java.util.Calendar;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements LocationListener {
     BottomNavigationView bottomNavigationView;
-
+    private static final int LOCATION_PERMISSION_REQUEST_CODE = 1001;
+    private static final int LOCATION_SETTINGS_REQUEST_CODE = 1002;
+    private ProgressDialog progressDialog;
+    private LocationManager locationManager;
+    private boolean isLocationUpdated = false;
+    private Location currentLocation;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
 
-        getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, new NimazTimeFragment()).commit();
+        getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, new HomeFragment2()).commit();
 
-
+        checkLocationPermission();
 //        startService(new Intent(this, AlarmService.class));
 
 
@@ -36,7 +52,6 @@ public class MainActivity extends AppCompatActivity {
                 int itemId = item.getItemId();
 
                  if (itemId == R.id.menu_prayer) {
-
                      getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, new NimazTimeFragment()).commit();
                      return true;
                  } else if (itemId == R.id.menu_compass) {
@@ -57,4 +72,115 @@ public class MainActivity extends AppCompatActivity {
             }
         });
     }
+    private void checkLocationPermission() {
+        if (ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            requestLocationPermission();
+        } else {
+            // Check if location services are globally enabled
+            if (isLocationEnabled()) {
+                showProgressDialog();
+                // Location services are enabled, proceed with getting the current location
+                getCurrentLocation();
+            } else {
+                // Location services are not enabled, show dialog to enable
+                showEnableLocationDialog();
+                dismissProgressDialog();
+            }
+        }
+    }
+    private boolean isLocationEnabled() {
+        LocationManager locationManager = (LocationManager) MainActivity.this.getSystemService(Context.LOCATION_SERVICE);
+        return locationManager != null && locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
+    }
+    private void requestLocationPermission() {
+        new AlertDialog.Builder(MainActivity.this)
+                .setTitle("Location Permission")
+                .setMessage("This app needs access to your location to function properly.")
+                .setPositiveButton("Grant Permission", (dialog, which) -> {
+                    requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_PERMISSION_REQUEST_CODE);
+                })
+                .setNegativeButton("Cancel", (dialog, which) -> {
+                    dialog.dismiss();
+                    finish();
+                })
+                .create()
+                .show();
+
+    }
+    private void showEnableLocationDialog() {
+        new AlertDialog.Builder(MainActivity.this)
+                .setTitle("Enable Location")
+                .setMessage("Location services are required for this app. Please enable location services.")
+                .setPositiveButton("Enable", (dialog, which) -> {
+                    // Open the location settings page
+                    Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+                    startActivityForResult(intent, LOCATION_SETTINGS_REQUEST_CODE);
+                    dialog.dismiss();
+                })
+                .setNegativeButton("Cancel", (dialog, which) -> {
+                    dialog.dismiss();
+                    finish();
+                })
+                .create()
+                .show();
+    }
+    private void getCurrentLocation() {
+        // Check if location permissions are granted
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+                ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // Permissions not granted, you can request permissions here using ActivityCompat.requestPermissions
+            // For example:
+            // ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, REQUEST_LOCATION_PERMISSION);
+            Toast.makeText(this, "Location permission is required", Toast.LENGTH_SHORT).show();
+            return; // Exit the method as we cannot proceed without permissions
+        }
+
+        if (!isLocationEnabled()) {
+            // Location services are not enabled, show dialog to enable
+            showEnableLocationDialog();
+
+            return; // Exit the method as we cannot proceed without location services
+        }
+        // Permissions are granted, proceed with getting the location
+        if (!isLocationUpdated) {
+            Location lastKnownLocationGPS = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+            Location lastKnownLocationNetwork = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+
+
+            if (lastKnownLocationGPS != null) {
+                currentLocation = lastKnownLocationGPS;
+            } else if (lastKnownLocationNetwork != null) {
+                currentLocation = lastKnownLocationNetwork;
+            } else {
+                locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, this);
+                locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, this);
+            }
+        }
+
+        dismissProgressDialog();
+
+    }
+
+
+    private void showProgressDialog() {
+        progressDialog = new ProgressDialog(MainActivity.this);
+        progressDialog.setMessage("Fetching location...");
+        progressDialog.setCancelable(false);
+        progressDialog.show();
+    }
+    private void dismissProgressDialog() {
+        if (progressDialog != null && progressDialog.isShowing()) {
+            progressDialog.dismiss();
+        }
+    }
+
+    @Override
+    public void onLocationChanged(@NonNull Location location) {
+
+    }
+    public void onStatusChanged(String provider, int status, Bundle extras) {}
+    @Override
+    public void onProviderEnabled(String provider) {}
+    @Override
+    public void onProviderDisabled(String provider) {}
 }

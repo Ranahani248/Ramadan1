@@ -29,6 +29,7 @@
 
         <activity
             android:name=".MainActivity"
+            android:screenOrientation="portrait"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -40,7 +41,8 @@
 
         <receiver android:name=".AlarmReceiver"
             android:process=":remote" />
-
+<service android:name=".AlarmService"
+    android:exported="false"/>
 
         <receiver
             android:name="com.example.ramadan1.AlarmReceiver"

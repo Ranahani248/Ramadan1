@@ -57,7 +57,7 @@ public class HomeFragment2 extends Fragment {
         sehriTime_alarm = view.findViewById(R.id.sehriTime_alarm);
         iftariTime_alarm = view.findViewById(R.id.iftariTime);
         ViewPager viewPager = view.findViewById(R.id.viewPager);
-        issehriAlarmSet = loadAlarmState("Sehri_Alarm");
+
         if(issehriAlarmSet){
             sehriTime_alarm.setImageResource(R.drawable.baseline_notifications_active_24);
         }else{
@@ -71,7 +71,6 @@ public class HomeFragment2 extends Fragment {
         } else {
             iftariTime_alarm.setImageResource(R.drawable.baseline_notifications_none_24);
         }
-
         // Prepare your texts and images
         List<String> texts = Arrays.asList("يَا حَيُّ يَا قَيُّومُ بِرَحْمَتِكَ أَسْتَغيثُ", "Text 2", "Text 3");
         List<Integer> imageIds = Arrays.asList(R.drawable.qibla, R.drawable.qibla, R.drawable.qibla);
@@ -95,6 +94,25 @@ public class HomeFragment2 extends Fragment {
         ArrayAdapter<String> adapter = new ArrayAdapter<>(getContext(), android.R.layout.simple_spinner_item, cities);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         select_city1.setAdapter(adapter);
+
+
+        String jsonString = Sehri_iftar_JsonHelper.loadJSONFromAsset(requireContext(), "json.json");
+        List<SehriIftarModel> sehriIftarList = Sehri_iftar_JsonHelper.parseSehriIftarData(jsonString);
+
+        if (!sehriIftarList.isEmpty()) {
+            SehriIftarModel todaySehriIftar = sehriIftarList.get(0);
+            sehriTime1.setText(todaySehriIftar.getSehriTime());
+            iftariTime1.setText(todaySehriIftar.getIftarTime());
+            sehriTime2.setText(todaySehriIftar.getSehriTime());
+            iftariTime2.setText(todaySehriIftar.getIftarTime());
+        }
+
+        // Fragment transitions
+        sehrialarmLayout.setOnClickListener(v -> sendNotification(sehriTime1.getText().toString(), null));
+        iftarialarmLayout.setOnClickListener(v -> sendNotification(null, iftariTime1.getText().toString()));
+
+
+//        AlarmHelper.setupAlarmWithVibration(getActivity(), model.getIftarCalendar());
         iftariTime_alarm.setOnClickListener(v -> {
             if (!isiftariAlarmSet) {
                 String iftariTime = iftariTime2.getText().toString();
@@ -114,6 +132,9 @@ public class HomeFragment2 extends Fragment {
                 iftariCalendar.set(Calendar.MINUTE, iftariMinute);
                 iftariCalendar.set(Calendar.SECOND, 0);
 
+                if (iftariCalendar.before(Calendar.getInstance())) {
+                    iftariCalendar.add(Calendar.DAY_OF_MONTH, 1);
+                }
                 // Add logs for debugging
                 Log.d("AlarmDebug", "Iftari Calendar Time: " + iftariCalendar.getTime());
 
@@ -124,7 +145,7 @@ public class HomeFragment2 extends Fragment {
             } else {
                 AlarmHelper.cancelAlarm(requireContext(), 7);
                 saveAlarmState("Iftari_Alarm", false);
-               iftariTime_alarm.setImageResource(R.drawable.baseline_notifications_none_24);
+                iftariTime_alarm.setImageResource(R.drawable.baseline_notifications_none_24);
                 isiftariAlarmSet = false;
             }
         });
@@ -149,6 +170,10 @@ public class HomeFragment2 extends Fragment {
                 sehriCalendar.set(Calendar.MINUTE, sehriMinute);
                 sehriCalendar.set(Calendar.SECOND, 0);
 
+
+                if (sehriCalendar.before(Calendar.getInstance())) {
+                    sehriCalendar.add(Calendar.DAY_OF_MONTH, 1);
+                }
                 // Add logs for debugging
                 Log.d("AlarmDebug", "Sehri Calendar Time: " + sehriCalendar.getTime());
 
@@ -163,24 +188,6 @@ public class HomeFragment2 extends Fragment {
                 issehriAlarmSet = false;
             }
         });
-
-        String jsonString = Sehri_iftar_JsonHelper.loadJSONFromAsset(requireContext(), "json.json");
-        List<SehriIftarModel> sehriIftarList = Sehri_iftar_JsonHelper.parseSehriIftarData(jsonString);
-
-        if (!sehriIftarList.isEmpty()) {
-            SehriIftarModel todaySehriIftar = sehriIftarList.get(0);
-            sehriTime1.setText(todaySehriIftar.getSehriTime());
-            iftariTime1.setText(todaySehriIftar.getIftarTime());
-            sehriTime2.setText(todaySehriIftar.getSehriTime());
-            iftariTime2.setText(todaySehriIftar.getIftarTime());
-        }
-
-        // Fragment transitions
-        sehrialarmLayout.setOnClickListener(v -> sendNotification(sehriTime1.getText().toString(), null));
-        iftarialarmLayout.setOnClickListener(v -> sendNotification(null, iftariTime1.getText().toString()));
-
-
-//        AlarmHelper.setupAlarmWithVibration(getActivity(), model.getIftarCalendar());
 
         return view;
     }

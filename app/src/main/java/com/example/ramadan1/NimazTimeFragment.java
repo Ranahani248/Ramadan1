@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.text.format.DateFormat;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -15,6 +16,12 @@ import android.widget.Toast;
 
 import androidx.fragment.app.Fragment;
 
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.Volley;
 import com.ibm.icu.util.IslamicCalendar;
 
 import org.json.JSONArray;
@@ -23,22 +30,23 @@ import org.json.JSONObject;
 
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
 
 public class NimazTimeFragment extends Fragment {
     TextView fajrTimeTextView, dhuhrTimeTextView, asrTimeTextView, maghribTimeTextView, ishaTimeTextView, english_date1, islamic_date;
-    ImageView fajar_time_alarm,fajar_time_alarm_0ff,dhuhr_Time_Alarm,dhuhr_time_alarm_0ff,asr_Time_Alarm,asr_time_alarm_0ff,maghrib_time_alarm,maghrib_time_alarm_0ff,isha_time_alarm,isha_time_alarm_0ff;
-
-    LinearLayout linearLayout1, linearLayout2, linearLayout3, linearLayout4, linearLayout5 ;
-
+    ImageView fajar_time_alarm, fajar_time_alarm_0ff, dhuhr_Time_Alarm, dhuhr_time_alarm_0ff, asr_Time_Alarm, asr_time_alarm_0ff, maghrib_time_alarm, maghrib_time_alarm_0ff, isha_time_alarm, isha_time_alarm_0ff;
+    LinearLayout linearLayout1, linearLayout2, linearLayout3, linearLayout4, linearLayout5;
     int requestCodeFajr = 1;
     int requestCodeDhuhr = 2;
     int requestCodeAsr = 3;
     int requestCodeMaghrib = 4;
     int requestCodeIsha = 5;
+
     public NimazTimeFragment() {
         // Required empty public constructor
     }
@@ -47,7 +55,6 @@ public class NimazTimeFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_nimaz_time, container, false);
-
         fajrTimeTextView = view.findViewById(R.id.fajar_time);
         dhuhrTimeTextView = view.findViewById(R.id.Dhuhr_time);
         dhuhr_time_alarm_0ff = view.findViewById(R.id.dhuhr_time_alarm_0ff);
@@ -91,26 +98,28 @@ public class NimazTimeFragment extends Fragment {
 
         // Load JSON data from a file or a string (you can adapt this based on your approach)
         String jsonString = loadJsonData("namzTime.json");
-        try {
-            JSONObject jsonObject = new JSONObject(jsonString);
-            JSONArray prayerTimesArray = jsonObject.getJSONArray("prayerTimes");
+//        try {
+//            JSONObject jsonObject = new JSONObject(jsonString);
+//            JSONArray prayerTimesArray = jsonObject.getJSONArray("prayerTimes");
+//
+//            for (int i = 0; i < prayerTimesArray.length(); i++) {
+//                JSONObject prayerObject = prayerTimesArray.getJSONObject(i);
+//                String date = prayerObject.getString("date");
+//
+//                if (date.equals(todayDateEnglish)) {
+//                    fajrTimeTextView.setText(prayerObject.getString("fajr"));
+//                    dhuhrTimeTextView.setText(prayerObject.getString("dhuhr"));
+//                    asrTimeTextView.setText(prayerObject.getString("asr"));
+//                    maghribTimeTextView.setText(prayerObject.getString("maghrib"));
+//                    ishaTimeTextView.setText(prayerObject.getString("isha"));
+//                    break;
+//                }
+//            }
+//        } catch (JSONException e) {
+//            e.printStackTrace();
+//        }
+        loadData();
 
-            for (int i = 0; i < prayerTimesArray.length(); i++) {
-                JSONObject prayerObject = prayerTimesArray.getJSONObject(i);
-                String date = prayerObject.getString("date");
-
-                if (date.equals(todayDateEnglish)) {
-                    fajrTimeTextView.setText(prayerObject.getString("fajr"));
-                    dhuhrTimeTextView.setText(prayerObject.getString("dhuhr"));
-                    asrTimeTextView.setText(prayerObject.getString("asr"));
-                    maghribTimeTextView.setText(prayerObject.getString("maghrib"));
-                    ishaTimeTextView.setText(prayerObject.getString("isha"));
-                    break;
-                }
-            }
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
 
         linearLayout1.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -164,7 +173,6 @@ public class NimazTimeFragment extends Fragment {
         });
 
 
-
         fajar_time_alarm.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -190,13 +198,16 @@ public class NimazTimeFragment extends Fragment {
                 fajrCalendar.set(Calendar.MINUTE, fajrMinute);
                 fajrCalendar.set(Calendar.SECOND, 0);
 
+                if (fajrCalendar.before(Calendar.getInstance())) {
+                    fajrCalendar.add(Calendar.DAY_OF_MONTH, 1);
+                }
+
                 // Add logs for debugging
                 Log.d("AlarmDebug", "Fajr Calendar Time: " + fajrCalendar.getTime());
 
                 // Set up the alarm for Fajr time
                 AlarmHelper.setupAlarmWithVibration(requireContext(), fajrCalendar, requestCodeFajr);
                 saveAlarmState("fajr_alarm", true);
-
 
                 Toast.makeText(getContext(), "Fajr alarm set", Toast.LENGTH_SHORT).show();
             }
@@ -238,6 +249,9 @@ public class NimazTimeFragment extends Fragment {
                 dhuhrCalendar.set(Calendar.MINUTE, dhuhrMinute);
                 dhuhrCalendar.set(Calendar.SECOND, 0);
 
+                if (dhuhrCalendar.before(Calendar.getInstance())) {
+                    dhuhrCalendar.add(Calendar.DAY_OF_MONTH, 1);
+                }
                 // Add logs for debugging
                 Log.d("AlarmDebug", "Dhuhr Calendar Time: " + dhuhrCalendar.getTime());
 
@@ -285,6 +299,9 @@ public class NimazTimeFragment extends Fragment {
                 asrCalendar.set(Calendar.MINUTE, asrMinute);
                 asrCalendar.set(Calendar.SECOND, 0);
 
+                if (asrCalendar.before(Calendar.getInstance())) {
+                    asrCalendar.add(Calendar.DAY_OF_MONTH, 1);
+                }
                 // Add logs for debugging
                 Log.d("AlarmDebug", "Asr Calendar Time: " + asrCalendar.getTime());
 
@@ -333,6 +350,10 @@ public class NimazTimeFragment extends Fragment {
                 maghribCalendar.set(Calendar.MINUTE, maghribMinute);
                 maghribCalendar.set(Calendar.SECOND, 0);
 
+                if (maghribCalendar.before(Calendar.getInstance())) {
+                    maghribCalendar.add(Calendar.DAY_OF_MONTH, 1);
+                }
+
                 // Add logs for debugging
                 Log.d("AlarmDebug", "Maghrib Calendar Time: " + maghribCalendar.getTime());
 
@@ -379,6 +400,9 @@ public class NimazTimeFragment extends Fragment {
                 ishaCalendar.set(Calendar.MINUTE, ishaMinute);
                 ishaCalendar.set(Calendar.SECOND, 0);
 
+                if (ishaCalendar.before(Calendar.getInstance())) {
+                    ishaCalendar.add(Calendar.DAY_OF_MONTH, 1);
+                }
                 // Add logs for debugging
                 Log.d("AlarmDebug", "Isha Calendar Time: " + ishaCalendar.getTime());
 
@@ -418,16 +442,116 @@ public class NimazTimeFragment extends Fragment {
     }
 
 
-
     private void saveAlarmState(String key, boolean isAlarmOn) {
         SharedPreferences preferences = requireActivity().getPreferences(Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = preferences.edit();
         editor.putBoolean(key, isAlarmOn);
         editor.apply();
     }
+
     private boolean loadAlarmState(String key) {
         SharedPreferences preferences = requireActivity().getPreferences(Context.MODE_PRIVATE);
         return preferences.getBoolean(key, false);
     }
 
+
+    public static String convertDate(String dateInMilliseconds, String dateFormat) {
+        return DateFormat.format(dateFormat, Long.parseLong(dateInMilliseconds)).toString();
+    }
+
+    private void loadData() {
+        long millis = Calendar.getInstance().getTimeInMillis();
+        String city = "Islamabad";
+        String country = "Pakistan";
+        String customURL = "https://api.aladhan.com/v1/calendarByCity/{YEAR}/{MONTH}?city={CITY}&country={COUNTRY}&method=2";
+        String url = customURL.replace("{YEAR}", convertDate(String.valueOf(millis), "yyyy"))
+                .replace("{MONTH}", convertDate(String.valueOf(millis), "MM"))
+                .replace("{CITY}", city)
+                .replace("{COUNTRY}", country);
+
+        RequestQueue queue = Volley.newRequestQueue(requireContext());
+        JsonObjectRequest request = new JsonObjectRequest(Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
+            @Override
+            public void onResponse(JSONObject response) {
+                try {
+                    String status = response.getString("status");
+                    if (status.equals("OK")) {
+                        JSONArray dataArray = response.getJSONArray("data");
+
+                        for (int i = 0; i < dataArray.length(); i++) {
+                            JSONObject timingObject = dataArray.getJSONObject(i).getJSONObject("timings");
+                            String date = dataArray.getJSONObject(i).getJSONObject("date").getString("readable");
+
+                            // Update your UI or process the data as needed
+                            updateUIWithData(timingObject, date);
+                        }
+                    }
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                    Toast.makeText(requireContext(), "JSON Parsing Error", Toast.LENGTH_SHORT).show();
+                }
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                error.printStackTrace();
+                Toast.makeText(requireContext(), "Network Error: " + error.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        queue.add(request);
+    }
+
+    // Update the UI with data from the API response
+    private void updateUIWithData(JSONObject timingObject, String date) {
+        try {
+            String fajrTime = convertTo12HourFormat(removeTimeZoneSuffix(timingObject.getString("Fajr")));
+            String dhuhrTime = convertTo12HourFormat(removeTimeZoneSuffix(timingObject.getString("Dhuhr")));
+            String asrTime = convertTo12HourFormat(removeTimeZoneSuffix(timingObject.getString("Asr")));
+            String maghribTime = convertTo12HourFormat(removeTimeZoneSuffix(timingObject.getString("Maghrib")));
+            String ishaTime = convertTo12HourFormat(removeTimeZoneSuffix(timingObject.getString("Isha")));
+
+            // Update UI components with the modified times
+            fajrTimeTextView.setText(fajrTime);
+            dhuhrTimeTextView.setText(dhuhrTime);
+            asrTimeTextView.setText(asrTime);
+            maghribTimeTextView.setText(maghribTime);
+            ishaTimeTextView.setText(ishaTime);
+
+            // Update any other UI components as needed
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
+    // Remove the timezone suffix (e.g., "(PKT)") and convert to 12-hour format
+    private String convertTo12HourFormat(String timeWithSuffix) {
+        // Assuming the input time is always in the HH:mm format
+        SimpleDateFormat inputFormat = new SimpleDateFormat("HH:mm", Locale.getDefault());
+        SimpleDateFormat outputFormat = new SimpleDateFormat("h:mm a", Locale.getDefault());
+
+        try {
+            // Parse the input time and format it to 12-hour format
+            Date date = inputFormat.parse(timeWithSuffix);
+            if (date != null) {
+                return outputFormat.format(date);
+            }
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+
+        // Return the original time if parsing fails
+        return timeWithSuffix;
+    }
+
+    // Remove the timezone suffix (e.g., "(PKT)")
+    private String removeTimeZoneSuffix(String timeWithSuffix) {
+        int indexOfParentheses = timeWithSuffix.indexOf("(");
+        if (indexOfParentheses != -1) {
+            // Remove the portion starting from the first parenthesis
+            return timeWithSuffix.substring(0, indexOfParentheses).trim();
+        } else {
+            return timeWithSuffix.trim();
+        }
+    }
 }

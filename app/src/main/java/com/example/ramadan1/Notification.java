@@ -21,6 +21,7 @@ import android.widget.TextView;
 
 import androidx.annotation.RequiresApi;
 import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -34,7 +35,6 @@ public class Notification extends Activity {
     private Vibrator mVibrator;
     private final long[] mVibratePattern = {0, 500, 500};
     private boolean mVibrate;
-    String alarmTitle;
     private Uri mAlarmSound;
     private long mPlayTime;
     private Timer mTimer = null;
@@ -47,6 +47,13 @@ public class Notification extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setContentView(R.layout.notification);
+
+        if (NotificationActivity.areNotificationsEnabled(getApplicationContext())) {
+            NotificationHandler.showAlarmNotification(getApplicationContext());
+        } else {
+            Log.i("ActivityName", "Notifications are disabled");
+    }
 
         Log.i(TAG, "AlarmNotification.onCreate()");
         getWindow().addFlags(
@@ -58,8 +65,6 @@ public class Notification extends Activity {
 
         setContentView(R.layout.notification);
         mDateTime = new Date();
-         alarmTitle = getIntent().getStringExtra("AlarmTitle");
-
 
         mTextView = findViewById(R.id.alarm_title_text);
 
@@ -70,9 +75,8 @@ public class Notification extends Activity {
         if (mVibrate)
             mVibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
         start(getIntent());
-        NotificationHandler.showAlarmNotification(this);
-    }
 
+    }
 
     @Override
     protected void onDestroy() {
@@ -93,7 +97,8 @@ public class Notification extends Activity {
     private void start(Intent intent) {
         mAlarm = new Alarm(this);
         mAlarm.fromIntent(intent);
-        mTextView.setText(alarmTitle);
+        Log.i(TAG, "AlarmNotification.start('" + mAlarm.getTitle() + "')");
+        mTextView.setText(mAlarm.getTitle());
         mTimerTask = new PlayTimerTask();
         mTimer = new Timer();
         mTimer.schedule(mTimerTask, mPlayTime);
@@ -113,13 +118,17 @@ public class Notification extends Activity {
         finish();
     }
     public void onSnoozeClick(View view) {
-        finish();
+
+        if (mTimer != null) {
+            mTimer.cancel(); // Cancel the existing timer
+        }
         // Schedule a new TimerTask after 10 minutes
         mTimerTask = new PlayTimerTask();
         mTimer = new Timer();
-        mTimer.schedule(mTimerTask, 10 * 60 * 1000); // 10 minutes in milliseconds
+        mTimer.schedule(mTimerTask,  10 * 60 * 1000);
         if (mVibrate)
             mVibrator.vibrate(mVibratePattern, 0);
+        finish();
     }
     private void readPreferences() {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
@@ -144,7 +153,6 @@ public class Notification extends Activity {
                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
                 .setSmallIcon(R.drawable.baseline_notifications_active_24)
                 .setAutoCancel(true)
-                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
                 .setContentTitle("Missed alarm: " + alarm.getTitle())
                 .setContentText(formattedDate)
                 .build();

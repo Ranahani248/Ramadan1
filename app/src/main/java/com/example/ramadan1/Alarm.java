@@ -25,9 +25,8 @@ public class Alarm implements Comparable<Alarm> {
     public Alarm(Context context) {
         mContext = context;
         mId = 0;
-        SimpleDateFormat sdf = new SimpleDateFormat("HH:mm", Locale.getDefault());
-        String currentTime = sdf.format(new Date(System.currentTimeMillis()));
-        mTitle = currentTime;        mDate = System.currentTimeMillis();
+        mTitle = "Default Title";
+        mDate = System.currentTimeMillis();
         mEnabled = true;
         mOccurence = ONCE;
 
@@ -97,9 +96,8 @@ public class Alarm implements Comparable<Alarm> {
 
         // Set a default title if the title is null
         if (mTitle == null) {
-            SimpleDateFormat sdf = new SimpleDateFormat("HH:mm", Locale.getDefault());
-            String currentTime = sdf.format(new Date(System.currentTimeMillis()));
-            mTitle = currentTime;        }
+            mTitle = "Default Title";
+        }
 
         mDate = intent.getLongExtra("com.example.ramadan1.date", 0);
         mEnabled = intent.getBooleanExtra("com.example.ramadan1.alarm", true);

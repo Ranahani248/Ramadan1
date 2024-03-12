@@ -26,6 +26,7 @@
         <!--            />-->
 
         <TextView
+            android:id="@+id/namz_name"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:fontFamily="@font/montserrat"
@@ -99,7 +100,7 @@
                 android:layout_marginEnd="10dp"
                 android:minWidth="48dp"
                 android:minHeight="48dp"
-                android:thumbTint="#FFFFFF"
+                android:thumbTint="#EC1111"
                 android:trackTint="#FFFFFF"
                 tools:ignore="UseSwitchCompatOrMaterialXml" />
 

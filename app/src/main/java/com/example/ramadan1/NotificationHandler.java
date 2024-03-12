@@ -9,8 +9,10 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
+import android.util.Log;
 
 import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
 
 public class NotificationHandler {
 
@@ -18,6 +20,8 @@ public class NotificationHandler {
 
     // Create notification channel (Call this method once)
     public static void createNotificationChannel(Context context) {
+
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationChannel channel = new NotificationChannel(
                     CHANNEL_ID,
@@ -26,12 +30,20 @@ public class NotificationHandler {
             NotificationManager notificationManager =
                     (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
             notificationManager.createNotificationChannel(channel);
+
+
         }
     }
 
     public static void showAlarmNotification(Context context) {
         // Notification channel creation (Call this method once)
+
+        if (!areNotificationsEnabled(context)) {
+            Log.i("NotificationHandler", "Notifications are disabled.");
+            return; // Don't proceed with notification if disabled
+        }
         createNotificationChannel(context);
+
 
         NotificationManager notificationManager =
                 (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
@@ -51,6 +63,7 @@ public class NotificationHandler {
                 .setContentText("Click Me")
                 .setContentIntent(activity)
                 .setAutoCancel(true)
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setSmallIcon(R.drawable.baseline_notifications_active_24)
                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC);
 
@@ -92,4 +105,8 @@ public class NotificationHandler {
         // Add your date formatting logic here
         return String.valueOf(date);
     }
+    public static boolean areNotificationsEnabled(Context context) {
+        return NotificationManagerCompat.from(context).areNotificationsEnabled();
+    }
+
 }

@@ -1,10 +1,8 @@
 package com.example.ramadan1;
 
-import static androidx.core.location.LocationManagerCompat.isLocationEnabled;
-
 import android.Manifest;
+import android.app.ProgressDialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.hardware.Sensor;
@@ -16,9 +14,7 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.provider.Settings;
-import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.Surface;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
@@ -33,9 +29,10 @@ import androidx.fragment.app.Fragment;
 public class QiblaDirectionFragment extends Fragment implements SensorEventListener, LocationListener {
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1001;
     private static final int LOCATION_SETTINGS_REQUEST_CODE = 1002;
-
+    private ProgressDialog progressDialog;
     ImageView imageView, imageView1;
     private SensorManager sensorManager;
+    int i = 0;
     private LocationManager locationManager;
     private static final float ALPHA = 0.1f; // Smoothing factor
     private float[] smoothedGravity = new float[3];
@@ -79,12 +76,14 @@ public class QiblaDirectionFragment extends Fragment implements SensorEventListe
         if (ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             requestLocationPermission();
         } else {
-            // Check if location services are enabled
+            // Check if location services are globally enabled
             if (isLocationEnabled()) {
+                showProgressDialog();
                 getCurrentLocation();
             } else {
                 // Location services are not enabled, show dialog to enable
                 showEnableLocationDialog();
+
             }
         }
     }
@@ -100,19 +99,34 @@ public class QiblaDirectionFragment extends Fragment implements SensorEventListe
             return; // Exit the method as we cannot proceed without permissions
         }
 
+        if (!isLocationEnabled()) {
+            // Location services are not enabled, show dialog to enable
+            showEnableLocationDialog();
+
+            return; // Exit the method as we cannot proceed without location services
+        }
         // Permissions are granted, proceed with getting the location
         if (!isLocationUpdated) {
-            Location lastKnownLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+            Location lastKnownLocationGPS = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+            Location lastKnownLocationNetwork = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
 
-            if (lastKnownLocation != null) {
-                currentLocation = lastKnownLocation;
-                isLocationUpdated = true; // Set the flag to true so that it won't update again
-                updateCompassImage();
-                Log.d("Location", "Current location: " + currentLocation.getLatitude() + ", " + currentLocation.getLongitude());
+
+            if (lastKnownLocationGPS != null) {
+                currentLocation = lastKnownLocationGPS;
+            } else if (lastKnownLocationNetwork != null) {
+                currentLocation = lastKnownLocationNetwork;
             } else {
                 locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, this);
+                locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, this);
             }
         }
+
+        if (currentLocation != null) {
+            isLocationUpdated = true;
+            updateCompassImage();
+        }
+
+
     }
 
 
@@ -161,20 +175,19 @@ public class QiblaDirectionFragment extends Fragment implements SensorEventListe
             updateCompassImage();
         }
     }
-
-
     private void updateCompassImage() {
         if (currentLocation != null) {
             float bearingToKaaba = currentLocation.bearingTo(kaabaLocation);
             float rotation = azimuth - bearingToKaaba;
             rotation = (rotation + 360) % 360;
             imageView.setRotation(-rotation);
+            dismissProgressDialog();
         }
     }
-
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         if (requestCode == LOCATION_PERMISSION_REQUEST_CODE && grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            showProgressDialog();  // Show loading bar while fetching location
             getCurrentLocation();
         } else {
             Toast.makeText(requireContext(), "Location permission denied", Toast.LENGTH_SHORT).show();
@@ -184,7 +197,8 @@ public class QiblaDirectionFragment extends Fragment implements SensorEventListe
     @Override
     public void onLocationChanged(Location location) {
         currentLocation = location;
-        updateCompassImage();
+        dismissProgressDialog();  // Dismiss loading bar after location is fetched
+
     }
 
     @Override
@@ -196,7 +210,6 @@ public class QiblaDirectionFragment extends Fragment implements SensorEventListe
     @Override
     public void onAccuracyChanged(Sensor sensor, int accuracy) {}
 
-
     private void requestLocationPermission() {
         new AlertDialog.Builder(requireActivity())
                 .setTitle("Location Permission")
@@ -207,6 +220,7 @@ public class QiblaDirectionFragment extends Fragment implements SensorEventListe
                 .setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss())
                 .create()
                 .show();
+
     }
     private void showEnableLocationDialog() {
         new AlertDialog.Builder(requireActivity())
@@ -216,6 +230,7 @@ public class QiblaDirectionFragment extends Fragment implements SensorEventListe
                     // Open the location settings page
                     Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
                     startActivityForResult(intent, LOCATION_SETTINGS_REQUEST_CODE);
+                    dialog.dismiss();
                 })
                 .setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss())
                 .create()
@@ -238,5 +253,17 @@ public class QiblaDirectionFragment extends Fragment implements SensorEventListe
     private boolean isLocationEnabled() {
         LocationManager locationManager = (LocationManager) requireContext().getSystemService(Context.LOCATION_SERVICE);
         return locationManager != null && locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
+    }
+
+    private void showProgressDialog() {
+        progressDialog = new ProgressDialog(requireContext());
+        progressDialog.setMessage("Fetching location...");
+        progressDialog.setCancelable(false);
+        progressDialog.show();
+    }
+    private void dismissProgressDialog() {
+        if (progressDialog != null && progressDialog.isShowing()) {
+            progressDialog.dismiss();
+        }
     }
 }
