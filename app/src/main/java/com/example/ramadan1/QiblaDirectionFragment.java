@@ -197,6 +197,7 @@ public class QiblaDirectionFragment extends Fragment implements SensorEventListe
     @Override
     public void onLocationChanged(Location location) {
         currentLocation = location;
+
         dismissProgressDialog();  // Dismiss loading bar after location is fetched
 
     }
