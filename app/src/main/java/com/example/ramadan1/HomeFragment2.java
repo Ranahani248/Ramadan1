@@ -1,11 +1,17 @@
 package com.example.ramadan1;
 
+import static android.service.controls.ControlsProviderService.TAG;
+import static com.example.ramadan1.NimazTimeFragment.convertDate;
+
 import android.annotation.SuppressLint;
 import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.location.Address;
+import android.location.Geocoder;
+import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
 import androidx.fragment.app.Fragment;
@@ -21,20 +27,34 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.Volley;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.IOException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
-// Import statements...
-
+import java.util.Locale;
 public class HomeFragment2 extends Fragment {
-
-    TextView textView, sehriTime1, iftariTime1, sehriTime2, iftariTime2;
+    TextView textView, sehriTime1, iftariTime1, sehriTime2, iftariTime2,jaffri_sehri_time,jaffri_iftari_time;
     LinearLayout sehrialarmLayout, iftarialarmLayout;
-    SehriIftarModel model;
     Spinner select_city1;
     boolean issehriAlarmSet;
     boolean isiftariAlarmSet ;
+    private Location currentLocation;
     ImageView sehriTime_alarm , iftariTime_alarm;
 
     public HomeFragment2() {
@@ -53,10 +73,19 @@ public class HomeFragment2 extends Fragment {
         iftariTime1 = view.findViewById(R.id.iftariTime1);
         sehriTime2 = view.findViewById(R.id.sehriTime2);
         iftariTime2 = view.findViewById(R.id.iftariTime2);
+        jaffri_sehri_time = view.findViewById(R.id.jaffri_sehri_time);
+        jaffri_iftari_time = view.findViewById(R.id.jaffri_iftar_time);
         select_city1 = view.findViewById(R.id.select_city1);
         sehriTime_alarm = view.findViewById(R.id.sehriTime_alarm);
         iftariTime_alarm = view.findViewById(R.id.iftariTime);
         ViewPager viewPager = view.findViewById(R.id.viewPager);
+        MainActivity activity = (MainActivity) getActivity();
+        assert activity != null;
+        activity.getCurrentLocation();
+        activity.checkLocationPermission();
+        currentLocation = activity.currentLocation;
+        loadData(currentLocation);
+
 
         if(issehriAlarmSet){
             sehriTime_alarm.setImageResource(R.drawable.baseline_notifications_active_24);
@@ -95,24 +124,10 @@ public class HomeFragment2 extends Fragment {
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         select_city1.setAdapter(adapter);
 
-
-        String jsonString = Sehri_iftar_JsonHelper.loadJSONFromAsset(requireContext(), "json.json");
-        List<SehriIftarModel> sehriIftarList = Sehri_iftar_JsonHelper.parseSehriIftarData(jsonString);
-
-        if (!sehriIftarList.isEmpty()) {
-            SehriIftarModel todaySehriIftar = sehriIftarList.get(0);
-            sehriTime1.setText(todaySehriIftar.getSehriTime());
-            iftariTime1.setText(todaySehriIftar.getIftarTime());
-            sehriTime2.setText(todaySehriIftar.getSehriTime());
-            iftariTime2.setText(todaySehriIftar.getIftarTime());
-        }
-
         // Fragment transitions
         sehrialarmLayout.setOnClickListener(v -> sendNotification(sehriTime1.getText().toString(), null));
         iftarialarmLayout.setOnClickListener(v -> sendNotification(null, iftariTime1.getText().toString()));
 
-
-//        AlarmHelper.setupAlarmWithVibration(getActivity(), model.getIftarCalendar());
         iftariTime_alarm.setOnClickListener(v -> {
             if (!isiftariAlarmSet) {
                 String iftariTime = iftariTime2.getText().toString();
@@ -149,12 +164,9 @@ public class HomeFragment2 extends Fragment {
                 isiftariAlarmSet = false;
             }
         });
-        sehriTime_alarm.setOnClickListener(v ->
-        {
-
+        sehriTime_alarm.setOnClickListener(v -> {
             if (!issehriAlarmSet) {
                 String SehriTime = sehriTime2.getText().toString();
-
                 String[] sehriTimeParts = SehriTime.split(":");
                 int sehriHour = Integer.parseInt(sehriTimeParts[0]);
                 int sehriMinute = Integer.parseInt(sehriTimeParts[1].split("\\s+")[0]);
@@ -188,7 +200,6 @@ public class HomeFragment2 extends Fragment {
                 issehriAlarmSet = false;
             }
         });
-
         return view;
     }
     private void sendNotification(String sehriTime, String iftariTime) {
@@ -206,5 +217,129 @@ public class HomeFragment2 extends Fragment {
     private boolean loadAlarmState(String key) {
         SharedPreferences preferences = requireActivity().getPreferences(Context.MODE_PRIVATE);
         return preferences.getBoolean(key, false);
+    }
+     void loadData(Location location) {
+        if (location != null) {
+            Geocoder geocoder = new Geocoder(requireContext(), Locale.getDefault());
+            try {
+                List<Address> addresses = geocoder.getFromLocation(location.getLatitude(), location.getLongitude(), 1);
+                if (!addresses.isEmpty()) {
+                    String city = addresses.get(0).getLocality();
+                    String country = addresses.get(0).getCountryName();
+
+                    long millis = Calendar.getInstance().getTimeInMillis();
+                    String customURL = "https://api.aladhan.com/v1/timingsByAddress/{day}-{MONTH}-{year}?address={city}%2C+{country}";
+                    String url = customURL.replace("{year}", convertDate(String.valueOf(millis), "yyyy"))
+                            .replace("{MONTH}", convertDate(String.valueOf(millis), "MM"))
+                            .replace("{day}", convertDate(String.valueOf(millis), "dd"))
+                            .replace("{city}", city)
+                            .replace("{country}", country);
+
+                    RequestQueue queue = Volley.newRequestQueue(requireContext());
+                    JsonObjectRequest request = new JsonObjectRequest(Request.Method.GET, url, null, response -> {
+                        try {
+                            String status = response.getString("status");
+                            if (status.equals("OK")) {
+                                JSONObject dataObject = response.getJSONObject("data");
+                                JSONObject timingObject = dataObject.getJSONObject("timings");
+                                String date = dataObject.getJSONObject("date").getString("readable");
+                                // Update your UI or process the data as needed
+                                updateUIWithData(timingObject, date);
+                            }
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                            Toast.makeText(requireContext(), "JSON Parsing Error", Toast.LENGTH_SHORT).show();
+                        }
+                    }, new Response.ErrorListener() {
+                        @Override
+                        public void onErrorResponse(VolleyError error) {
+                            error.printStackTrace();
+                            Toast.makeText(requireContext(), "Network Error: " + error.getMessage(), Toast.LENGTH_SHORT).show();
+                        }
+                    });
+
+                    queue.add(request);
+                }
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            } finally {
+
+            }
+        }
+        else {
+            Toast.makeText(requireContext(), "Location not found", Toast.LENGTH_SHORT).show();
+        }
+
+
+    }
+    // Remove the timezone suffix (e.g., "(PKT)") and convert to 12-hour format
+    private String convertTo12HourFormat(String timeWithSuffix) {
+        // Assuming the input time is always in the HH:mm format
+        SimpleDateFormat inputFormat = new SimpleDateFormat("HH:mm", Locale.getDefault());
+        SimpleDateFormat outputFormat = new SimpleDateFormat("h:mm a", Locale.getDefault());
+
+        try {
+            // Parse the input time and format it to 12-hour format
+            Date date = inputFormat.parse(timeWithSuffix);
+            if (date != null) {
+                return outputFormat.format(date);
+            }
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+
+        // Return the original time if parsing fails
+        return timeWithSuffix;
+    }
+    // Remove the timezone suffix (e.g., "(PKT)")
+
+    private String removeTimeZoneSuffix(String timeWithSuffix) {
+        int indexOfParentheses = timeWithSuffix.indexOf("(");
+        if (indexOfParentheses != -1) {
+            // Remove the portion starting from the first parenthesis
+            return timeWithSuffix.substring(0, indexOfParentheses).trim();
+        } else {
+            return timeWithSuffix.trim();
+        }
+    }
+    private String adjustTime(String timeWithSuffix, int minutes) {
+        SimpleDateFormat inputFormat = new SimpleDateFormat("h:mm a", Locale.getDefault());
+        Calendar calendar = Calendar.getInstance();
+        try {
+            // Parse the input time
+            Date date = inputFormat.parse(timeWithSuffix);
+            if (date != null) {
+                calendar.setTime(date);
+                // Adjust the time by adding or subtracting minutes
+                calendar.add(Calendar.MINUTE, minutes);
+                // Format the adjusted time back to the desired format
+                return inputFormat.format(calendar.getTime());
+            }
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        // Return the original time if parsing fails
+        return timeWithSuffix;
+    }
+    private void updateUIWithData(JSONObject timingObject, String date) {
+        try {
+            String fajrTime = convertTo12HourFormat(removeTimeZoneSuffix(timingObject.getString("Fajr")));
+            String maghribTime = convertTo12HourFormat(removeTimeZoneSuffix(timingObject.getString("Maghrib")));
+            String adjustedFajrTime = adjustTime(fajrTime, -10);  // Subtract 10 minutes
+            String adjustedMaghribTime = adjustTime(maghribTime, 10);  // Add 10 minutes
+
+            Log.d(TAG, "updateUIWithData: "+adjustedFajrTime+" "+adjustedMaghribTime);
+            // Update UI components with the modified times
+            sehriTime1.setText(fajrTime);
+            iftariTime1.setText(maghribTime);
+            sehriTime2.setText(adjustedFajrTime);
+            iftariTime2.setText(adjustedMaghribTime);
+            jaffri_sehri_time.setText(adjustedFajrTime);
+            jaffri_iftari_time.setText(adjustedMaghribTime);
+
+            // Update any other UI components as needed
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
     }
 }

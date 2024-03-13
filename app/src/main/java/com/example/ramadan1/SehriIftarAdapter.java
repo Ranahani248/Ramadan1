@@ -1,5 +1,8 @@
 package com.example.ramadan1;
 
+import static androidx.constraintlayout.helper.widget.MotionEffect.TAG;
+
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,10 +15,10 @@ import java.util.List;
 
 public class SehriIftarAdapter extends RecyclerView.Adapter<SehriIftarAdapter.ViewHolder> {
 
-    private List<SehriIftarModel> dataList;
+    private List<Sehri_iftari_class> dataList;
 
 
-    public SehriIftarAdapter(List<SehriIftarModel> dataList) {
+    public SehriIftarAdapter(List<Sehri_iftari_class> dataList) {
         this.dataList = dataList;
     }
 
@@ -28,12 +31,13 @@ public class SehriIftarAdapter extends RecyclerView.Adapter<SehriIftarAdapter.Vi
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        SehriIftarModel item = dataList.get(position);
+        Sehri_iftari_class item = dataList.get(position);
         holder.id.setText(String.valueOf(item.getId()));
-        holder.textViewSehriTime.setText(item.getSehriTime());
-        holder.textViewIftarTime.setText(item.getIftarTime());
+        holder.textViewSehriTime.setText(item.getSehri());
+        holder.textViewIftarTime.setText(item.getIftari());
         holder.textViewDate.setText(item.getDate());
         holder.textViewDay.setText(item.getDay());
+        Log.d(TAG, "onBindViewHolder: data"+item.data+item.getIftari() + item.getSehri());
     }
 
     @Override

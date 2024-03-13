@@ -21,8 +21,8 @@ public class AlarmReceiver extends BroadcastReceiver {
             Log.i("AlarmReceiver", "Notifications are disabled");
         }
         // Start the Notification activity
-        Intent newIntent = new Intent(context, Notification.class);
-        alarm.toIntent(newIntent);
+        Intent newIntent = new Intent();
+        newIntent.setClass(context, NotificationActivity.class);
         newIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
         context.startActivity(newIntent);
     }

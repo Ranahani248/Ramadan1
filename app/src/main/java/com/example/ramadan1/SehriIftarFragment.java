@@ -7,6 +7,7 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -49,13 +50,19 @@ public class SehriIftarFragment extends Fragment {
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         cityList.setAdapter(adapter);
 
-        String jsonString = Sehri_iftar_JsonHelper.loadJSONFromAsset(requireContext(), "json.json");
-        List<SehriIftarModel> sehriIftarList = Sehri_iftar_JsonHelper.parseSehriIftarData(jsonString);
+        Sehri_iftar_JsonHelper jsonHelper = new Sehri_iftar_JsonHelper();
 
-        RecyclerView recyclerView = view.findViewById(R.id.recyclerView2);
-        SehriIftarAdapter adapter1 = new SehriIftarAdapter(sehriIftarList);
-        recyclerView.setAdapter(adapter1);
-        recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
+        MainActivity activity = (MainActivity) getActivity();
+        assert activity != null;
+        jsonHelper.updateData(getContext(), activity.currentLocation, new Sehri_iftar_JsonHelper.DataLoadListener() {
+            @Override
+            public void onDataLoaded(List<Sehri_iftari_class> sehriIftarList) {
+                RecyclerView recyclerView = view.findViewById(R.id.recyclerView2);
+                SehriIftarAdapter adapter1 = new SehriIftarAdapter(sehriIftarList);
+                recyclerView.setAdapter(adapter1);
+                recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
+            }
+        });
 
         return view;
     }
