@@ -68,9 +68,13 @@ public class SehriIftarFragment extends Fragment {
         return view;
     }
     public void updateAdapter(List<Sehri_iftari_class> sehriIftarList) {
-        SehriIftarAdapter adapter1 = new SehriIftarAdapter(sehriIftarList);
-        if(recyclerView != null){
-        recyclerView.setAdapter(adapter1);
-        recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));}
+        if (isAdded() && getContext() != null) {
+            SehriIftarAdapter adapter1 = new SehriIftarAdapter(sehriIftarList);
+            if (recyclerView != null) {
+                recyclerView.setAdapter(adapter1);
+                recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+            }
+        }
     }
+
 }
