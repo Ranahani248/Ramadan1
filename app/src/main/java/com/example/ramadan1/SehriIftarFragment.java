@@ -25,6 +25,7 @@ import java.util.List;
 public class SehriIftarFragment extends Fragment {
     Spinner cityList;
     TextView english_date1, Islamic_date;
+    RecyclerView recyclerView;
 
     public SehriIftarFragment() {
         // Required empty public constructor
@@ -39,6 +40,8 @@ public class SehriIftarFragment extends Fragment {
         Islamic_date = view.findViewById(R.id.Islamic_date);
         // Get today's date in the English calendar
         String todayDateEnglish = DateHelper.getCurrentDateEnglish();
+         recyclerView = view.findViewById(R.id.recyclerView2);
+
         english_date1.setText(todayDateEnglish);
         // Get today's date in the Islamic calendar
         String todayDateIslamic = DateHelper.getCurrentDateIslamic();
@@ -49,21 +52,25 @@ public class SehriIftarFragment extends Fragment {
         ArrayAdapter<String> adapter = new ArrayAdapter<>(getContext(), android.R.layout.simple_spinner_item, cities);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         cityList.setAdapter(adapter);
-
         Sehri_iftar_JsonHelper jsonHelper = new Sehri_iftar_JsonHelper();
-
         MainActivity activity = (MainActivity) getActivity();
         assert activity != null;
         jsonHelper.updateData(getContext(), activity.currentLocation, new Sehri_iftar_JsonHelper.DataLoadListener() {
             @Override
             public void onDataLoaded(List<Sehri_iftari_class> sehriIftarList) {
-                RecyclerView recyclerView = view.findViewById(R.id.recyclerView2);
                 SehriIftarAdapter adapter1 = new SehriIftarAdapter(sehriIftarList);
                 recyclerView.setAdapter(adapter1);
                 recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
             }
-        });
+
+        },this);
 
         return view;
+    }
+    public void updateAdapter(List<Sehri_iftari_class> sehriIftarList) {
+        SehriIftarAdapter adapter1 = new SehriIftarAdapter(sehriIftarList);
+        if(recyclerView != null){
+        recyclerView.setAdapter(adapter1);
+        recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));}
     }
 }

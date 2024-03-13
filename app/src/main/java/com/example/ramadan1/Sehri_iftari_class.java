@@ -6,7 +6,7 @@ import java.util.List;
 public class Sehri_iftari_class {
 
     public String date;
-    List<Sehri_iftari_class> data = new ArrayList<>();
+   static List<Sehri_iftari_class> data = new ArrayList<>();
     public String Sehri;
     public String Iftari;
     public  Sehri_iftari_class(String date, String Sehri, String Iftari, String Day, int id) {

@@ -9,6 +9,8 @@ import android.location.Location;
 import android.util.Log;
 import android.widget.Toast;
 
+import androidx.fragment.app.Fragment;
+
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
@@ -24,26 +26,31 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.TreeMap;
 
 public class Sehri_iftar_JsonHelper {
-    List<Sehri_iftari_class> sehriIftarList = new ArrayList<>();
-    int i;
+     static List <Sehri_iftari_class> sehriIftarList = new ArrayList<>();
+    TreeMap<String, Sehri_iftari_class> sehriIftarMap = new TreeMap<>();
 
-void updateData(Context context, Location currentLocation,DataLoadListener listener) {
+    int i=0;
 
+void updateData(Context context, Location currentLocation,DataLoadListener listener, SehriIftarFragment fragment) {
+    sehriIftarList.clear();
     // Define date range from 11th March to 9th April
     Calendar calendar = Calendar.getInstance();
     calendar.set(Calendar.YEAR, 2024); // Set the year to 2024
     calendar.set(Calendar.MONTH, Calendar.MARCH); // Set the month to March (March is indexed from 0)
-    calendar.set(Calendar.DAY_OF_MONTH, 11); // Set the starting day to 11th March
+    calendar.set(Calendar.DAY_OF_MONTH, 12); // Set the starting day to 11th March
 
     Calendar endDate = Calendar.getInstance();
     endDate.set(Calendar.YEAR, 2024); // Set the year to 2024
-    endDate.set(Calendar.MONTH, Calendar.MARCH); // Set the month to April (April is indexed from 3)
-    endDate.set(Calendar.DAY_OF_MONTH, 13); // Set the ending day to 9th April
+    endDate.set(Calendar.MONTH, Calendar.APRIL); // Set the month to April (April is indexed from 3)
+    endDate.set(Calendar.DAY_OF_MONTH, 9); // Set the ending day to 9th April
 
     // Loop through the date range and call loadData for each date
     while (!calendar.after(endDate)) {
@@ -51,7 +58,8 @@ void updateData(Context context, Location currentLocation,DataLoadListener liste
         SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy", Locale.getDefault());
         String dateString = sdf.format(date);
         // Call loadData function with the current location and application context
-         loadData(currentLocation, context, 1, dateString);
+        i++;
+         loadData(currentLocation, context, i, dateString, fragment);
 
 
         // Move to the next day
@@ -63,7 +71,7 @@ void updateData(Context context, Location currentLocation,DataLoadListener liste
         void onDataLoaded(List<Sehri_iftari_class> sehriIftarList);
     }
 
-    void loadData(Location location, Context context , int id , String dateString) {
+    void loadData(Location location, Context context , int id , String dateString, SehriIftarFragment fragment) {
         if (location != null) {
             Geocoder geocoder = new Geocoder(context, Locale.getDefault());
             try {
@@ -93,9 +101,7 @@ void updateData(Context context, Location currentLocation,DataLoadListener liste
                                 JSONObject dataObject = response.getJSONObject("data");
                                 JSONObject timingObject = dataObject.getJSONObject("timings");
                                 String date = dataObject.getJSONObject("date").getString("readable");
-                                updateUIWithData(timingObject, date ,id,context);
-                                Toast.makeText(context, ""+sehriIftarList.size(), Toast.LENGTH_SHORT).show();
-
+                                updateUIWithData(timingObject, date ,id,fragment);
                             }
                         } catch (JSONException e) {
                             e.printStackTrace();
@@ -121,7 +127,7 @@ void updateData(Context context, Location currentLocation,DataLoadListener liste
 
 
     }
-    private void updateUIWithData(JSONObject timingObject, String date, int id, Context context) {
+    private void updateUIWithData(JSONObject timingObject, String date, int id, SehriIftarFragment fragment) {
         try {
             String fajrTime = convertTo12HourFormat(removeTimeZoneSuffix(timingObject.getString("Fajr")));
             String maghribTime = convertTo12HourFormat(removeTimeZoneSuffix(timingObject.getString("Maghrib")));
@@ -129,10 +135,11 @@ void updateData(Context context, Location currentLocation,DataLoadListener liste
             // Get the day corresponding to the date
             String day = getDayFromDate(date);
 
-            // Create an instance of Sehri_iftari_class and add it to the list
-            sehriIftarList.add(new Sehri_iftari_class(day, date, fajrTime, maghribTime,id));
-//            Toast.makeText(context, ""+ sehriIftarList.size(), Toast.LENGTH_SHORT).show();
 
+            // Create an instance of Sehri_iftari_class and add it to the list
+            sehriIftarList.add(new Sehri_iftari_class( date, fajrTime, maghribTime,day,id));
+            sehriIftarList.sort(Comparator.comparingInt(Sehri_iftari_class::getId));
+            fragment.updateAdapter(sehriIftarList);
 
             // Update any other UI components as needed
         } catch (JSONException e) {
