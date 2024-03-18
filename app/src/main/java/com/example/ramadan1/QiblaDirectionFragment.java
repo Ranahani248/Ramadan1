@@ -4,6 +4,7 @@ import android.Manifest;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
@@ -32,7 +33,6 @@ public class QiblaDirectionFragment extends Fragment implements SensorEventListe
     private ProgressDialog progressDialog;
     ImageView imageView, imageView1;
     private SensorManager sensorManager;
-    int i = 0;
     private LocationManager locationManager;
     private static final float ALPHA = 0.1f; // Smoothing factor
     private float[] smoothedGravity = new float[3];
@@ -56,10 +56,20 @@ public class QiblaDirectionFragment extends Fragment implements SensorEventListe
 
         TextView english_date1 = view.findViewById(R.id.english_date1);
         TextView islamic_date = view.findViewById(R.id.Islamic_date);
+        TextView location_place = view.findViewById(R.id.location_place);
+
+
+        SharedPreferences preferences = requireActivity().getSharedPreferences("LocationPreferences", Context.MODE_PRIVATE);
+        String city = preferences.getString("city", "");
+        String country = preferences.getString("country", "");
+        location_place.setText(city + ", " + country);
+
+
         String todayDateEnglish = DateHelper.getCurrentDateEnglish();
         english_date1.setText(todayDateEnglish);
         String todayDateIslamic = DateHelper.getCurrentDateIslamic();
         islamic_date.setText(todayDateIslamic);
+
 
 
         initializeSensors();
@@ -79,11 +89,12 @@ public class QiblaDirectionFragment extends Fragment implements SensorEventListe
             // Check if location services are globally enabled
             if (isLocationEnabled()) {
                 showProgressDialog();
+                // Location services are enabled, proceed with getting the current location
                 getCurrentLocation();
             } else {
                 // Location services are not enabled, show dialog to enable
                 showEnableLocationDialog();
-
+                dismissProgressDialog();
             }
         }
     }
@@ -125,7 +136,7 @@ public class QiblaDirectionFragment extends Fragment implements SensorEventListe
             isLocationUpdated = true;
             updateCompassImage();
         }
-
+        dismissProgressDialog();
 
     }
 
@@ -181,7 +192,6 @@ public class QiblaDirectionFragment extends Fragment implements SensorEventListe
             float rotation = azimuth - bearingToKaaba;
             rotation = (rotation + 360) % 360;
             imageView.setRotation(-rotation);
-            dismissProgressDialog();
         }
     }
     @Override
@@ -197,7 +207,7 @@ public class QiblaDirectionFragment extends Fragment implements SensorEventListe
     @Override
     public void onLocationChanged(Location location) {
         currentLocation = location;
-
+        updateCompassImage();
         dismissProgressDialog();  // Dismiss loading bar after location is fetched
 
     }

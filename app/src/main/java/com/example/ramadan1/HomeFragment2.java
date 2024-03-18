@@ -5,8 +5,11 @@ import static com.example.ramadan1.NimazTimeFragment.convertDate;
 
 import android.annotation.SuppressLint;
 import android.app.AlarmManager;
+import android.app.AlertDialog;
 import android.app.PendingIntent;
+import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.location.Address;
@@ -25,6 +28,7 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -49,9 +53,20 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 public class HomeFragment2 extends Fragment {
-    TextView textView, sehriTime1, iftariTime1, sehriTime2, iftariTime2,jaffri_sehri_time,jaffri_iftari_time;
-    LinearLayout sehrialarmLayout, iftarialarmLayout;
+    TextView textView;
+    TextView sehriTime1;
+    TextView iftariTime1;
+    TextView sehriTime2;
+    TextView iftariTime2;
+    TextView jaffri_sehri_time;
+    TextView jaffri_iftari_time;
+    TextView location_place;
+    RelativeLayout sehrialarmLayout, iftarialarmLayout;
+    LinearLayout jaffri_sehri_time_alarm,jaffri_iftari_time_alarm;
     Spinner select_city1;
+    private ProgressDialog progressDialog;
+    boolean isJaffriShriAlarmSet;
+    boolean isjaffriIftarAlarmSet2;
     boolean issehriAlarmSet;
     boolean isiftariAlarmSet ;
     private Location currentLocation;
@@ -75,17 +90,20 @@ public class HomeFragment2 extends Fragment {
         iftariTime2 = view.findViewById(R.id.iftariTime2);
         jaffri_sehri_time = view.findViewById(R.id.jaffri_sehri_time);
         jaffri_iftari_time = view.findViewById(R.id.jaffri_iftar_time);
-        select_city1 = view.findViewById(R.id.select_city1);
+        jaffri_sehri_time_alarm = view.findViewById(R.id.jaffri_sehri_time_alarm);
+        jaffri_iftari_time_alarm = view.findViewById(R.id.jaffri_Iftar_time_alarm);
+//        select_city1 = view.findViewById(R.id.select_city1);
         sehriTime_alarm = view.findViewById(R.id.sehriTime_alarm);
         iftariTime_alarm = view.findViewById(R.id.iftariTime);
+        location_place = view.findViewById(R.id.location_place);
         ViewPager viewPager = view.findViewById(R.id.viewPager);
+
         MainActivity activity = (MainActivity) getActivity();
         assert activity != null;
         activity.getCurrentLocation();
         activity.checkLocationPermission();
         currentLocation = activity.currentLocation;
         loadData(currentLocation);
-
 
         if(issehriAlarmSet){
             sehriTime_alarm.setImageResource(R.drawable.baseline_notifications_active_24);
@@ -120,9 +138,10 @@ public class HomeFragment2 extends Fragment {
         String todayDateIslamic = DateHelper.getCurrentDateIslamic();
         islamic_date.setText(todayDateIslamic);
 
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(getContext(), android.R.layout.simple_spinner_item, cities);
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        select_city1.setAdapter(adapter);
+//        ArrayAdapter<String> adapter = new ArrayAdapter<>(getContext(), android.R.layout.simple_spinner_item, cities);
+//        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+//        select_city1.setAdapter(adapter);
+
 
         // Fragment transitions
         sehrialarmLayout.setOnClickListener(v -> sendNotification(sehriTime1.getText().toString(), null));
@@ -141,6 +160,10 @@ public class HomeFragment2 extends Fragment {
                     IftariHour += 12;
                 } else if (amPm.equalsIgnoreCase("AM") && IftariHour == 12) {
                     IftariHour = 0;
+                }
+
+                if (amPm.equalsIgnoreCase("PM") &&  IftariHour< 12) {
+                    IftariHour += 12;
                 }
                 Calendar iftariCalendar = Calendar.getInstance();
                 iftariCalendar.set(Calendar.HOUR_OF_DAY, IftariHour);
@@ -182,7 +205,6 @@ public class HomeFragment2 extends Fragment {
                 sehriCalendar.set(Calendar.MINUTE, sehriMinute);
                 sehriCalendar.set(Calendar.SECOND, 0);
 
-
                 if (sehriCalendar.before(Calendar.getInstance())) {
                     sehriCalendar.add(Calendar.DAY_OF_MONTH, 1);
                 }
@@ -200,12 +222,62 @@ public class HomeFragment2 extends Fragment {
                 issehriAlarmSet = false;
             }
         });
+
+//        jaffri_sehri_time_alarm.setOnClickListener(v -> {
+//            if (!isJaffriShriAlarmSet) {
+//                String SehriTime = jaffri_sehri_time.getText().toString();
+//                String[] sehriTimeParts = SehriTime.split(":");
+//                int sehriHour = Integer.parseInt(sehriTimeParts[0]);
+//                int sehriMinute = Integer.parseInt(sehriTimeParts[1].split("\\s+")[0]);
+//                String amPm = sehriTimeParts[1].split("\\s+")[1];
+//                // Adjust hours for PM
+//                if (amPm.equalsIgnoreCase("PM") && sehriHour != 12) {
+//                    sehriHour += 12;
+//                } else if (amPm.equalsIgnoreCase("AM") && sehriHour == 12) {
+//                    sehriHour = 0;
+//                }
+//                Calendar sehriCalendar = Calendar.getInstance();
+//                sehriCalendar.set(Calendar.HOUR_OF_DAY, sehriHour);
+//                sehriCalendar.set(Calendar.MINUTE, sehriMinute);
+//                sehriCalendar.set(Calendar.SECOND, 0);
+//
+//
+//                if (sehriCalendar.before(Calendar.getInstance())) {
+//                    sehriCalendar.add(Calendar.DAY_OF_MONTH, 1);
+//                }
+//                // Add logs for debugging
+//                Log.d("AlarmDebug", "Sehri Calendar Time: " + sehriCalendar.getTime());
+//
+//                AlarmHelper.setupAlarmWithVibration(requireContext(), Calendar.getInstance(), 7);
+//                saveAlarmState("Jaffri_Alarm", true);
+//                isJaffriShriAlarmSet = true;
+//            } else {
+//                AlarmHelper.cancelAlarm(requireContext(), 5);
+//                saveAlarmState("Jaffri_Alarm", false);
+//                isJaffriShriAlarmSet = false;
+//            }
+//
+//        });
+//        jaffri_iftari_time_alarm.setOnClickListener(v -> {
+//            if (!isJaffriShriAlarmSet) {
+//
+//                AlarmHelper.setupAlarmWithVibration(requireContext(), Calendar.getInstance(), 8);
+//                saveAlarmState("Jaffri_Alarm", true);
+//                isJaffriShriAlarmSet = true;
+//            } else {
+//                AlarmHelper.cancelAlarm(requireContext(), 4);
+//                saveAlarmState("Jaffri_Alarm", false);
+//                isJaffriShriAlarmSet = false;
+//            }
+//        });
+//
         return view;
     }
     private void sendNotification(String sehriTime, String iftariTime) {
         Intent notificationIntent = new Intent(requireContext(), NotificationActivity.class);
         notificationIntent.putExtra("sehriTime", sehriTime);
         notificationIntent.putExtra("iftariTime", iftariTime);
+        Log.d(TAG, "sendNotification: times"+sehriTime+iftariTime);
         startActivity(notificationIntent);
     }
     private void saveAlarmState(String key, boolean isAlarmOn) {
@@ -218,7 +290,7 @@ public class HomeFragment2 extends Fragment {
         SharedPreferences preferences = requireActivity().getPreferences(Context.MODE_PRIVATE);
         return preferences.getBoolean(key, false);
     }
-     void loadData(Location location) {
+    void loadData(Location location) {
         if (location != null) {
             Geocoder geocoder = new Geocoder(requireContext(), Locale.getDefault());
             try {
@@ -226,7 +298,8 @@ public class HomeFragment2 extends Fragment {
                 if (!addresses.isEmpty()) {
                     String city = addresses.get(0).getLocality();
                     String country = addresses.get(0).getCountryName();
-
+                    location_place.setText(city + ", " + country);
+                    saveLocation(city, country);
                     long millis = Calendar.getInstance().getTimeInMillis();
                     String customURL = "https://api.aladhan.com/v1/timingsByAddress/{day}-{MONTH}-{year}?address={city}%2C+{country}";
                     String url = customURL.replace("{year}", convertDate(String.valueOf(millis), "yyyy"))
@@ -245,6 +318,7 @@ public class HomeFragment2 extends Fragment {
                                 String date = dataObject.getJSONObject("date").getString("readable");
                                 // Update your UI or process the data as needed
                                 updateUIWithData(timingObject, date);
+                                dismissProgressDialog();
                             }
                         } catch (JSONException e) {
                             e.printStackTrace();
@@ -255,23 +329,35 @@ public class HomeFragment2 extends Fragment {
                         public void onErrorResponse(VolleyError error) {
                             error.printStackTrace();
                             Toast.makeText(requireContext(), "Network Error: " + error.getMessage(), Toast.LENGTH_SHORT).show();
+                            showProgressDialog();
+
                         }
                     });
 
                     queue.add(request);
                 }
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                e.printStackTrace();
+                // Service not available, show dialog box
+                showDialogBox("Service Not Available", "The location service is not available. Please try again later.");
+                dismissProgressDialog();
             } finally {
-
+                // Your existing code...
             }
         }
         else {
             Toast.makeText(requireContext(), "Location not found", Toast.LENGTH_SHORT).show();
         }
-
-
     }
+
+    private void saveLocation(String city, String country) {
+        SharedPreferences preferences = requireActivity().getSharedPreferences("LocationPreferences", Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = preferences.edit();
+        editor.putString("city", city);
+        editor.putString("country", country);
+        editor.apply();
+    }
+
     // Remove the timezone suffix (e.g., "(PKT)") and convert to 12-hour format
     private String convertTo12HourFormat(String timeWithSuffix) {
         // Assuming the input time is always in the HH:mm format
@@ -332,8 +418,8 @@ public class HomeFragment2 extends Fragment {
             // Update UI components with the modified times
             sehriTime1.setText(fajrTime);
             iftariTime1.setText(maghribTime);
-            sehriTime2.setText(adjustedFajrTime);
-            iftariTime2.setText(adjustedMaghribTime);
+            sehriTime2.setText(fajrTime);
+            iftariTime2.setText(maghribTime);
             jaffri_sehri_time.setText(adjustedFajrTime);
             jaffri_iftari_time.setText(adjustedMaghribTime);
 
@@ -341,5 +427,32 @@ public class HomeFragment2 extends Fragment {
         } catch (JSONException e) {
             e.printStackTrace();
         }
+    }
+
+    private void showProgressDialog() {
+        progressDialog = new ProgressDialog(getContext());
+        progressDialog.setMessage("Loading...Please wait for a moment");
+        progressDialog.setCancelable(false);
+        progressDialog.show();
+    }
+    private void dismissProgressDialog() {
+        if (progressDialog != null && progressDialog.isShowing()) {
+            progressDialog.dismiss();
+        }
+    }
+
+    private void showDialogBox(String title, String message) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
+        builder.setTitle(title)
+                .setMessage(message)
+                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        // Dismiss the dialog
+                        dialog.dismiss();
+                    }
+                });
+        AlertDialog dialog = builder.create();
+        dialog.show();
     }
 }

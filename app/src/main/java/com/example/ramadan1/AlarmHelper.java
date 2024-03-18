@@ -12,6 +12,7 @@ import android.util.Log;
 import java.util.Calendar;
 
 public class AlarmHelper {
+
     @SuppressLint("ScheduleExactAlarm")
     public static void setupAlarmWithVibration(Context context, Calendar calendar, int uniqueCode) {
         AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
@@ -34,13 +35,18 @@ public class AlarmHelper {
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                 alarmManager.setAlarmClock(alarmClockInfo, pendingIntent);
+            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), pendingIntent);
             } else {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), pendingIntent);
-                } else {
-                    alarmManager.setExact(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), pendingIntent);
-                }
+                alarmManager.setExact(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), pendingIntent);
             }
+
+            // Save alarm set time to SharedPreferences
+            context.getSharedPreferences(context.getPackageName() + "AlarmOpenSourceApp", Context.MODE_PRIVATE)
+                    .edit()
+                    .putLong("alarmTime" + uniqueCode, calendar.getTimeInMillis())
+                    .apply();
+
         } catch (Exception e) {
             Log.e("AlarmHelper", "Error setting alarm: " + e.getMessage());
         } finally {
@@ -59,6 +65,12 @@ public class AlarmHelper {
             AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
             alarmManager.cancel(pendingIntent);
             pendingIntent.cancel();
+
+            // Clear saved alarm time from SharedPreferences
+            context.getSharedPreferences(context.getPackageName() + "AlarmOpenSourceApp", Context.MODE_PRIVATE)
+                    .edit()
+                    .remove("alarmTime" + uniqueCode)
+                    .apply();
         }
     }
 }

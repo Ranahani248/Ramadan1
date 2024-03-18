@@ -22,7 +22,6 @@ public class CustomPagerAdapter extends PagerAdapter {
         this.texts = texts;
         this.imageIds = imageIds;
     }
-
     @Override
     public int getCount() {
         return texts.size();

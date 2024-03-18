@@ -1,42 +1,32 @@
 package com.example.ramadan1;
 
-import static com.example.ramadan1.NimazTimeFragment.convertDate;
-
+import static android.service.controls.ControlsProviderService.TAG;
 import android.content.Context;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
 import android.util.Log;
-import android.widget.Toast;
-
-import androidx.fragment.app.Fragment;
-
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
-
 import org.json.JSONException;
 import org.json.JSONObject;
-
 import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.TreeMap;
-
 public class Sehri_iftar_JsonHelper {
      static List <Sehri_iftari_class> sehriIftarList = new ArrayList<>();
     TreeMap<String, Sehri_iftari_class> sehriIftarMap = new TreeMap<>();
-
     int i=0;
 
 void updateData(Context context, Location currentLocation,DataLoadListener listener, SehriIftarFragment fragment) {
@@ -67,11 +57,14 @@ void updateData(Context context, Location currentLocation,DataLoadListener liste
     }
     listener.onDataLoaded(sehriIftarList);
 }
+
+
+
     interface DataLoadListener {
         void onDataLoaded(List<Sehri_iftari_class> sehriIftarList);
     }
 
-    void loadData(Location location, Context context , int id , String dateString, SehriIftarFragment fragment) {
+    void loadData(Location location, Context context, int id, String dateString, SehriIftarFragment fragment) {
         if (location != null) {
             Geocoder geocoder = new Geocoder(context, Locale.getDefault());
             try {
@@ -91,7 +84,7 @@ void updateData(Context context, Location currentLocation,DataLoadListener liste
                             .replace("{city}", city)
                             .replace("{country}", country);
 
-                    Log.d("url", "loadData: "+url);
+                    Log.d("url", "loadData: " + url);
 
                     RequestQueue queue = Volley.newRequestQueue(context);
                     JsonObjectRequest request = new JsonObjectRequest(Request.Method.GET, url, null, response -> {
@@ -101,7 +94,7 @@ void updateData(Context context, Location currentLocation,DataLoadListener liste
                                 JSONObject dataObject = response.getJSONObject("data");
                                 JSONObject timingObject = dataObject.getJSONObject("timings");
                                 String date = dataObject.getJSONObject("date").getString("readable");
-                                updateUIWithData(timingObject, date ,id,fragment);
+                                updateUIWithData(timingObject, date, id, fragment);
                             }
                         } catch (JSONException e) {
                             e.printStackTrace();
@@ -120,26 +113,39 @@ void updateData(Context context, Location currentLocation,DataLoadListener liste
             } finally {
 
             }
+        } else {
+            // Handle the case where location is null
         }
-        else {
-        }
-
-
-
     }
     private void updateUIWithData(JSONObject timingObject, String date, int id, SehriIftarFragment fragment) {
         try {
             String fajrTime = convertTo12HourFormat(removeTimeZoneSuffix(timingObject.getString("Fajr")));
             String maghribTime = convertTo12HourFormat(removeTimeZoneSuffix(timingObject.getString("Maghrib")));
 
-            // Get the day corresponding to the date
-            String day = getDayFromDate(date);
+            if ("Jaffari".equals(fragment.selectedRadioButton)) {
+                Log.d(TAG, "updateUIWithData: "+fragment.selectedRadioButton);
+                // Adjust iftar and sehri times based on the selected Jaffari radio button
+                fajrTime = adjustTime(fajrTime, -10);
+                maghribTime = adjustTime(maghribTime, 10);
+                String day = getDayFromDate(date);
 
+                // Clear the list only if it's the first entry for "Jaffari"
+                if (sehriIftarList.isEmpty()) {
+                    sehriIftarList.clear();
+                }
 
-            // Create an instance of Sehri_iftari_class and add it to the list
-            sehriIftarList.add(new Sehri_iftari_class( date, fajrTime, maghribTime,day,id));
-            sehriIftarList.sort(Comparator.comparingInt(Sehri_iftari_class::getId));
-            fragment.updateAdapter(sehriIftarList);
+                sehriIftarList.add(new Sehri_iftari_class(date, fajrTime, maghribTime, day, id));
+                sehriIftarList.sort(Comparator.comparingInt(Sehri_iftari_class::getId));
+                fragment.updateAdapter(sehriIftarList);
+            } else {
+                // Get the day corresponding to the date
+                String day = getDayFromDate(date);
+
+                // Create an instance of Sehri_iftari_class and add it to the list
+                sehriIftarList.add(new Sehri_iftari_class(date, fajrTime, maghribTime, day, id));
+                sehriIftarList.sort(Comparator.comparingInt(Sehri_iftari_class::getId));
+                fragment.updateAdapter(sehriIftarList);
+            }
 
             // Update any other UI components as needed
         } catch (JSONException e) {
@@ -194,4 +200,23 @@ void updateData(Context context, Location currentLocation,DataLoadListener liste
         }
     }
 
+    private String adjustTime(String timeWithSuffix, int minutes) {
+        SimpleDateFormat inputFormat = new SimpleDateFormat("h:mm a", Locale.getDefault());
+        Calendar calendar = Calendar.getInstance();
+        try {
+            // Parse the input time
+            Date date = inputFormat.parse(timeWithSuffix);
+            if (date != null) {
+                calendar.setTime(date);
+                // Adjust the time by adding or subtracting minutes
+                calendar.add(Calendar.MINUTE, minutes);
+                // Format the adjusted time back to the desired format
+                return inputFormat.format(calendar.getTime());
+            }
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        // Return the original time if parsing fails
+        return timeWithSuffix;
+    }
 }

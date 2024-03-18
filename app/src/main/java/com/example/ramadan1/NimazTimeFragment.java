@@ -1,8 +1,13 @@
 package com.example.ramadan1;
 
+import static android.service.controls.ControlsProviderService.TAG;
+
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.location.Address;
+import android.location.Geocoder;
+import android.location.Location;
 import android.os.Bundle;
 import android.text.format.DateFormat;
 import android.util.Log;
@@ -28,6 +33,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
@@ -35,6 +41,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 
 public class NimazTimeFragment extends Fragment {
@@ -46,6 +53,9 @@ public class NimazTimeFragment extends Fragment {
     int requestCodeAsr = 3;
     int requestCodeMaghrib = 4;
     int requestCodeIsha = 5;
+    TextView location_place;
+    private Location currentLocation;
+
 
     public NimazTimeFragment() {
         // Required empty public constructor
@@ -77,6 +87,9 @@ public class NimazTimeFragment extends Fragment {
         linearLayout3 = view.findViewById(R.id.linearLayout3);
         linearLayout4 = view.findViewById(R.id.linearLayout4);
         linearLayout5 = view.findViewById(R.id.linearLayout6);
+        location_place = view.findViewById(R.id.location_place);
+
+
 
 
         boolean isFajrAlarmOn = loadAlarmState("fajr_alarm");
@@ -118,7 +131,13 @@ public class NimazTimeFragment extends Fragment {
 //        } catch (JSONException e) {
 //            e.printStackTrace();
 //        }
-        loadData();
+
+        MainActivity activity = (MainActivity) getActivity();
+        assert activity != null;
+        activity.getCurrentLocation();
+        activity.checkLocationPermission();
+        currentLocation = activity.currentLocation;
+        loadData(currentLocation);
 
 
         linearLayout1.setOnClickListener(new View.OnClickListener() {
@@ -242,7 +261,6 @@ public class NimazTimeFragment extends Fragment {
                 if (amPm.equalsIgnoreCase("PM") && dhuhrHour < 12) {
                     dhuhrHour += 12;
                 }
-
                 // Create a Calendar object for the Dhuhr time
                 Calendar dhuhrCalendar = Calendar.getInstance();
                 dhuhrCalendar.set(Calendar.HOUR_OF_DAY, dhuhrHour);
@@ -459,99 +477,114 @@ public class NimazTimeFragment extends Fragment {
         return DateFormat.format(dateFormat, Long.parseLong(dateInMilliseconds)).toString();
     }
 
-    private void loadData() {
-        long millis = Calendar.getInstance().getTimeInMillis();
-        String city = "Islamabad";
-        String country = "Pakistan";
-        String customURL = "https://api.aladhan.com/v1/calendarByCity/{YEAR}/{MONTH}?city={CITY}&country={COUNTRY}&method=2";
-        String url = customURL.replace("{YEAR}", convertDate(String.valueOf(millis), "yyyy"))
-                .replace("{MONTH}", convertDate(String.valueOf(millis), "MM"))
-                .replace("{CITY}", city)
-                .replace("{COUNTRY}", country);
+    void loadData(Location location) {
+        if (location != null) {
+            Geocoder geocoder = new Geocoder(requireContext(), Locale.getDefault());
+            try {
+                List<Address> addresses = geocoder.getFromLocation(location.getLatitude(), location.getLongitude(), 1);
+                if (!addresses.isEmpty()) {
+                    String city = addresses.get(0).getLocality();
+                    String country = addresses.get(0).getCountryName();
+                    long millis = Calendar.getInstance().getTimeInMillis();
+                    location_place.setText(city + ", " + country);
 
-        RequestQueue queue = Volley.newRequestQueue(requireContext());
-        JsonObjectRequest request = new JsonObjectRequest(Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
-            @Override
-            public void onResponse(JSONObject response) {
-                try {
-                    String status = response.getString("status");
-                    if (status.equals("OK")) {
-                        JSONArray dataArray = response.getJSONArray("data");
+                    String customURL = "https://api.aladhan.com/v1/calendarByCity/{YEAR}/{MONTH}?city={CITY}&country={COUNTRY}&method=2";
+                    String url = customURL.replace("{YEAR}", convertDate(String.valueOf(millis), "yyyy"))
+                            .replace("{MONTH}", convertDate(String.valueOf(millis), "MM"))
+                            .replace("{CITY}", city)
+                            .replace("{COUNTRY}", country);
 
-                        for (int i = 0; i < dataArray.length(); i++) {
-                            JSONObject timingObject = dataArray.getJSONObject(i).getJSONObject("timings");
-                            String date = dataArray.getJSONObject(i).getJSONObject("date").getString("readable");
+                    RequestQueue queue = Volley.newRequestQueue(requireContext());
+                    JsonObjectRequest request = new JsonObjectRequest(Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
+                        @Override
+                        public void onResponse(JSONObject response) {
+                            try {
+                                String status = response.getString("status");
+                                if (status.equals("OK")) {
+                                    JSONArray dataArray = response.getJSONArray("data");
 
-                            // Update your UI or process the data as needed
-                            updateUIWithData(timingObject, date);
+                                    for (int i = 0; i < dataArray.length(); i++) {
+                                        JSONObject timingObject = dataArray.getJSONObject(i).getJSONObject("timings");
+                                        String date = dataArray.getJSONObject(i).getJSONObject("date").getString("readable");
+
+                                        // Update your UI or process the data as needed
+                                        updateUIWithData(timingObject, date);
+                                    }
+                                }
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                                Toast.makeText(requireContext(), "JSON Parsing Error", Toast.LENGTH_SHORT).show();
+                            }
                         }
-                    }
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                    Toast.makeText(requireContext(), "JSON Parsing Error", Toast.LENGTH_SHORT).show();
+                    }, new Response.ErrorListener() {
+                        @Override
+                        public void onErrorResponse(VolleyError error) {
+                            error.printStackTrace();
+                            Toast.makeText(requireContext(), "Network Error: " + error.getMessage(), Toast.LENGTH_SHORT).show();
+                        }
+                    });
+
+                    queue.add(request);
                 }
-            }
-        }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                error.printStackTrace();
-                Toast.makeText(requireContext(), "Network Error: " + error.getMessage(), Toast.LENGTH_SHORT).show();
-            }
-        });
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            } finally {
 
-        queue.add(request);
+            }
+        }
+        else {
+            Toast.makeText(requireContext(), "Location not found", Toast.LENGTH_SHORT).show();
+        }
     }
-
     // Update the UI with data from the API response
-    private void updateUIWithData(JSONObject timingObject, String date) {
-        try {
-            String fajrTime = convertTo12HourFormat(removeTimeZoneSuffix(timingObject.getString("Fajr")));
-            String dhuhrTime = convertTo12HourFormat(removeTimeZoneSuffix(timingObject.getString("Dhuhr")));
-            String asrTime = convertTo12HourFormat(removeTimeZoneSuffix(timingObject.getString("Asr")));
-            String maghribTime = convertTo12HourFormat(removeTimeZoneSuffix(timingObject.getString("Maghrib")));
-            String ishaTime = convertTo12HourFormat(removeTimeZoneSuffix(timingObject.getString("Isha")));
+                private void updateUIWithData(JSONObject timingObject, String date) {
+                    try {
+                        String fajrTime = convertTo12HourFormat(removeTimeZoneSuffix(timingObject.getString("Fajr")));
+                        String dhuhrTime = convertTo12HourFormat(removeTimeZoneSuffix(timingObject.getString("Dhuhr")));
+                        String asrTime = convertTo12HourFormat(removeTimeZoneSuffix(timingObject.getString("Asr")));
+                        String maghribTime = convertTo12HourFormat(removeTimeZoneSuffix(timingObject.getString("Maghrib")));
+                        String ishaTime = convertTo12HourFormat(removeTimeZoneSuffix(timingObject.getString("Isha")));
 
-            // Update UI components with the modified times
-            fajrTimeTextView.setText(fajrTime);
-            dhuhrTimeTextView.setText(dhuhrTime);
-            asrTimeTextView.setText(asrTime);
-            maghribTimeTextView.setText(maghribTime);
-            ishaTimeTextView.setText(ishaTime);
+                        // Update UI components with the modified times
+                        fajrTimeTextView.setText(fajrTime);
+                        dhuhrTimeTextView.setText(dhuhrTime);
+                        asrTimeTextView.setText(asrTime);
+                        maghribTimeTextView.setText(maghribTime);
+                        ishaTimeTextView.setText(ishaTime);
 
-            // Update any other UI components as needed
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-    }
+                        // Update any other UI components as needed
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+                // Remove the timezone suffix (e.g., "(PKT)") and convert to 12-hour format
+                private String convertTo12HourFormat(String timeWithSuffix) {
+                    // Assuming the input time is always in the HH:mm format
+                    SimpleDateFormat inputFormat = new SimpleDateFormat("HH:mm", Locale.getDefault());
+                    SimpleDateFormat outputFormat = new SimpleDateFormat("h:mm a", Locale.getDefault());
+                    try {
+                        // Parse the input time and format it to 12-hour format
+                        Date date = inputFormat.parse(timeWithSuffix);
+                        if (date != null) {
+                            return outputFormat.format(date);
+                        }
+                    } catch (ParseException e) {
+                        e.printStackTrace();
+                    }
 
-    // Remove the timezone suffix (e.g., "(PKT)") and convert to 12-hour format
-    private String convertTo12HourFormat(String timeWithSuffix) {
-        // Assuming the input time is always in the HH:mm format
-        SimpleDateFormat inputFormat = new SimpleDateFormat("HH:mm", Locale.getDefault());
-        SimpleDateFormat outputFormat = new SimpleDateFormat("h:mm a", Locale.getDefault());
+                    // Return the original time if parsing fails
+                    return timeWithSuffix;
+                }
 
-        try {
-            // Parse the input time and format it to 12-hour format
-            Date date = inputFormat.parse(timeWithSuffix);
-            if (date != null) {
-                return outputFormat.format(date);
-            }
-        } catch (ParseException e) {
-            e.printStackTrace();
-        }
-
-        // Return the original time if parsing fails
-        return timeWithSuffix;
-    }
-
-    // Remove the timezone suffix (e.g., "(PKT)")
-    private String removeTimeZoneSuffix(String timeWithSuffix) {
-        int indexOfParentheses = timeWithSuffix.indexOf("(");
-        if (indexOfParentheses != -1) {
-            // Remove the portion starting from the first parenthesis
-            return timeWithSuffix.substring(0, indexOfParentheses).trim();
-        } else {
-            return timeWithSuffix.trim();
-        }
+                // Remove the timezone suffix (e.g., "(PKT)")
+                private String removeTimeZoneSuffix(String timeWithSuffix) {
+                    int indexOfParentheses = timeWithSuffix.indexOf("(");
+                    if (indexOfParentheses != -1) {
+                        // Remove the portion starting from the first parenthesis
+                        return timeWithSuffix.substring(0, indexOfParentheses).trim();
+                    }
+                    else {
+                        return timeWithSuffix.trim();
+                    }
     }
 }

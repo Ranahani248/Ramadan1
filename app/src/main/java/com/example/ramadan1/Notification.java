@@ -14,6 +14,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Vibrator;
 import android.preference.PreferenceManager;
+import android.provider.Settings;
 import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
@@ -49,11 +50,11 @@ public class Notification extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.notification);
 
-        if (NotificationActivity.areNotificationsEnabled(getApplicationContext())) {
-            NotificationHandler.showAlarmNotification(getApplicationContext());
-        } else {
-            Log.i("ActivityName", "Notifications are disabled");
-    }
+//        if (NotificationActivity.areNotificationsEnabled(getApplicationContext())) {
+//            NotificationHandler.showAlarmNotification(getApplicationContext());
+//        } else {
+//            Log.i("ActivityName", "Notifications are disabled");
+//    }
 
         Log.i(TAG, "AlarmNotification.onCreate()");
         getWindow().addFlags(
@@ -71,7 +72,7 @@ public class Notification extends Activity {
 
         readPreferences();
 
-        mRingtone = RingtoneManager.getRingtone(getApplicationContext(), mAlarmSound);
+        mRingtone = RingtoneManager.getRingtone(getApplicationContext(), Settings.System.DEFAULT_ALARM_ALERT_URI);
         if (mVibrate)
             mVibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
         start(getIntent());

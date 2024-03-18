@@ -14,6 +14,7 @@
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
+
 <!--        <ImageView-->
 <!--            android:layout_width="wrap_content"-->
 <!--            android:layout_height="wrap_content"-->
@@ -76,12 +77,18 @@
 <!--            app:layout_constraintStart_toEndOf="@+id/citylist"-->
 <!--            app:layout_constraintTop_toTopOf="@+id/radioGroup" />-->
 
-        <Spinner
-            android:id="@+id/citylist"
+        <TextView
+            android:id="@+id/location_name"
             android:layout_width="150dp"
-            android:layout_height="wrap_content"
-            android:layout_margin="10dp"
-            android:minHeight="48dp"
+            android:layout_height="40dp"
+            android:layout_marginTop="10dp"
+            android:layout_marginStart="20dp"
+            android:fontFamily="@font/montserrat"
+            android:text="Your Location"
+            android:background="@drawable/layout_background1"
+            android:padding="8dp"
+            android:textSize="20sp"
+            android:textStyle="bold"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             tools:ignore="MissingConstraints" />
@@ -90,11 +97,10 @@
             android:id="@+id/radioGroup"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
             android:gravity="center"
-            app:layout_constraintBottom_toBottomOf="@+id/citylist"
+            android:orientation="horizontal"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="@+id/citylist">
+            tools:ignore="MissingConstraints">
 
             <RadioButton
                 android:id="@+id/radioButtonHanafi"
@@ -102,7 +108,7 @@
                 android:layout_height="wrap_content"
                 android:text="Hanafi"
                 android:textColor="#16225F"
-                android:textSize="13sp" />
+                android:textSize="11sp" />
 
             <RadioButton
                 android:id="@+id/radioButtonJaffari"
@@ -111,7 +117,7 @@
                 android:layout_margin="10dp"
                 android:text="Jaffari"
                 android:textColor="#16225F"
-                android:textSize="13sp" />
+                android:textSize="11sp" />
         </RadioGroup>
 
         <LinearLayout
@@ -120,7 +126,7 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:background="#F0F0F0"
-            app:layout_constraintTop_toBottomOf="@+id/citylist">
+            app:layout_constraintTop_toBottomOf="@+id/radioGroup">
 
             <TextView
                 android:layout_width="38dp"
@@ -188,6 +194,15 @@
 
         </LinearLayout>
 
+        <ProgressBar
+            android:id="@+id/progressBar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:layout_constraintBottom_toBottomOf="@+id/recyclerView2"
+            android:visibility="gone"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="@+id/linearLayout5"
+            app:layout_constraintTop_toTopOf="parent" />
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recyclerView2"
             android:layout_width="match_parent"

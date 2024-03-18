@@ -39,11 +39,11 @@
     </androidx.appcompat.widget.Toolbar>
     <TextView
         android:id="@+id/english_date1"
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@+id/toolbar"
-        android:layout_marginStart="33dp"
-        android:layout_marginTop="33dp"
+        android:layout_marginStart="20dp"
+        android:layout_marginTop="20dp"
         android:fontFamily="@font/montserrat"
         android:text="Wednesday 20 March"
         android:textColor="#FFFFFF"
@@ -51,15 +51,34 @@
         android:textStyle="bold" />
     <TextView
         android:id="@+id/Islamic_date"
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@+id/english_date1"
-        android:layout_marginStart="33dp"
+        android:layout_marginStart="20dp"
         android:layout_marginBottom="33dp"
         android:fontFamily="@font/montserrat"
         android:text="13 Shaaban, 1442 AH"
         android:textColor="#FFFFFF"
         android:textSize="15sp" />
+
+    <TextView
+        android:id="@+id/location_place"
+        android:layout_width="150dp"
+        android:layout_height="40dp"
+        android:layout_alignTop="@+id/english_date1"
+        android:layout_alignParentEnd="true"
+        android:background="@drawable/layout_background1"
+        android:fontFamily="@font/montserrat"
+        android:gravity="center"
+        android:layout_marginEnd="10dp"
+        android:padding="8dp"
+        android:text="Your Location"
+        android:textColor="#FFFFFF"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
@@ -117,14 +136,14 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="10dp"
-                android:src="@drawable/baseline_volume_up_24"
+                android:src="@drawable/baseline_volume_off_24"
                 tools:ignore="UseSwitchCompatOrMaterialXml" />
             <ImageView
                 android:id="@+id/fajar_time_alarm_0ff"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:visibility="gone"
-                android:src="@drawable/baseline_volume_off_24"
+                android:src="@drawable/baseline_volume_up_24"
                 tools:ignore="UseSwitchCompatOrMaterialXml" />
 
         </LinearLayout>
@@ -178,7 +197,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="10dp"
-                android:src="@drawable/baseline_volume_up_24"
+                android:src="@drawable/baseline_volume_off_24"
                 tools:ignore="UseSwitchCompatOrMaterialXml" />
 
             <ImageView
@@ -187,7 +206,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="10dp"
                 android:visibility="gone"
-                android:src="@drawable/baseline_volume_off_24"
+                android:src="@drawable/baseline_volume_up_24"
                 tools:ignore="UseSwitchCompatOrMaterialXml" />
 
 
@@ -242,7 +261,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="10dp"
-                android:src="@drawable/baseline_volume_up_24"
+                android:src="@drawable/baseline_volume_off_24"
                 tools:ignore="UseSwitchCompatOrMaterialXml" />
 
             <ImageView
@@ -251,7 +270,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="10dp"
                 android:visibility="gone"
-                android:src="@drawable/baseline_volume_off_24"
+                android:src="@drawable/baseline_volume_up_24"
                 tools:ignore="UseSwitchCompatOrMaterialXml" />
 
 
@@ -305,7 +324,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="10dp"
-                android:src="@drawable/baseline_volume_up_24"
+                android:src="@drawable/baseline_volume_off_24"
                 tools:ignore="UseSwitchCompatOrMaterialXml" />
 
             <ImageView
@@ -314,7 +333,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="10dp"
                 android:visibility="gone"
-                android:src="@drawable/baseline_volume_off_24"
+                android:src="@drawable/baseline_volume_up_24"
                 tools:ignore="UseSwitchCompatOrMaterialXml" />
 
 
@@ -368,7 +387,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="10dp"
-                android:src="@drawable/baseline_volume_up_24"
+                android:src="@drawable/baseline_volume_off_24"
                 tools:ignore="UseSwitchCompatOrMaterialXml" />
 
             <ImageView
@@ -377,7 +396,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="10dp"
                 android:visibility="gone"
-                android:src="@drawable/baseline_volume_off_24"
+                android:src="@drawable/baseline_volume_up_24"
                 tools:ignore="UseSwitchCompatOrMaterialXml" />
 
         </LinearLayout>

@@ -32,6 +32,34 @@ public class Sehri_iftari_class {
         return Day;
     }
 
+    public void setDate(String date) {
+        this.date = date;
+    }
+
+    public static List<Sehri_iftari_class> getData() {
+        return data;
+    }
+
+    public static void setData(List<Sehri_iftari_class> data) {
+        Sehri_iftari_class.data = data;
+    }
+
+    public void setSehri(String sehri) {
+        Sehri = sehri;
+    }
+
+    public void setIftari(String iftari) {
+        Iftari = iftari;
+    }
+
+    public void setDay(String day) {
+        Day = day;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
     public int getId() {
         return id;
     }

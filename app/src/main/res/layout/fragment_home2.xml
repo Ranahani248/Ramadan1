@@ -67,24 +67,39 @@
                     android:layout_marginStart="10dp"
                     android:layout_marginTop="10dp"
                     android:fontFamily="@font/montserrat"
-                    android:text="Sehr / Iftar"
+                    android:text="Sehr Iftar"
+                    android:padding="10dp"
                     android:textColor="#16225F"
+                    android:background="@drawable/layout_background1"
                     android:textSize="20sp"
                     android:textStyle="bold"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent" />
 
-
-                <Spinner
-                    android:id="@+id/select_city1"
+<!--                <Spinner-->
+<!--                    android:id="@+id/select_city1"-->
+<!--                    android:layout_width="150dp"-->
+<!--                    android:layout_height="wrap_content"-->
+<!--                    android:layout_marginTop="10dp"-->
+<!--                    android:layout_marginEnd="20dp"-->
+<!--                    android:minHeight="45dp"-->
+<!--                    app:layout_constraintEnd_toEndOf="parent"-->
+<!--                    app:layout_constraintTop_toTopOf="parent" />-->
+                <TextView
+                    android:id="@+id/location_place"
                     android:layout_width="150dp"
-                    android:layout_height="wrap_content"
+                    android:layout_height="42dp"
                     android:layout_marginTop="10dp"
-                    android:layout_marginEnd="20dp"
-                    android:minHeight="45dp"
+                    android:layout_marginEnd="10dp"
+                    android:fontFamily="@font/montserrat"
+                    android:text="Your Location" android:background="@drawable/layout_background1"
+                    android:padding="10dp"
+                    android:textSize="15sp"
+                    android:textStyle="bold"
+                    android:textColor="#16225F"
+app:layout_constraintBottom_toBottomOf="@+id/textView"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintTop_toTopOf="parent" />
-
 
                 <TextView
                     android:id="@+id/textView2"
@@ -110,7 +125,7 @@
                         android:layout_width="150dp"
                         android:layout_height="130dp"
                         android:layout_alignParentTop="true"
-                        android:layout_marginStart="23dp"
+                        android:layout_marginStart="10dp"
                         android:layout_marginTop="10dp"
                         android:layout_marginBottom="10dp"
                         android:background="@drawable/hanfia_backgound"
@@ -159,7 +174,7 @@
                         android:layout_alignParentEnd="true"
                         android:layout_gravity="end"
                         android:layout_marginTop="10dp"
-                        android:layout_marginEnd="23dp"
+                        android:layout_marginEnd="10dp"
                         android:layout_marginBottom="10dp"
                         android:background="@drawable/hanfia_backgound"
                         android:elevation="8dp"
@@ -185,7 +200,7 @@
                             android:layout_height="wrap_content"
                             android:layout_marginStart="5dp"
                             android:fontFamily="@font/montserrat"
-                            android:text="6 : 45 pm"
+                            android:text="-- : --"
                             android:textColor="#6075E5"
                             android:textSize="16sp"
                             android:textStyle="bold" />
@@ -199,6 +214,11 @@
                             android:src="@drawable/sun" />
 
                     </LinearLayout>
+
+                    <FrameLayout
+                        android:id="@+id/alarm_container"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent" />
 
                 </RelativeLayout>
 
@@ -224,9 +244,10 @@
                     app:layout_constraintTop_toBottomOf="@+id/textView7">
 
                     <LinearLayout
+                        android:id="@+id/jaffri_sehri_time_alarm"
                         android:layout_width="150dp"
                         android:layout_height="130dp"
-                        android:layout_marginStart="23dp"
+                        android:layout_marginStart="10dp"
                         android:layout_marginTop="10dp"
                         android:layout_marginBottom="10dp"
                         android:background="@drawable/hanfia_backgound"
@@ -269,12 +290,13 @@
                     </LinearLayout>
 
                     <LinearLayout
+                        android:id="@+id/jaffri_Iftar_time_alarm"
                         android:layout_width="150dp"
                         android:layout_height="130dp"
                         android:layout_alignParentEnd="true"
                         android:layout_gravity="end"
                         android:layout_marginTop="10dp"
-                        android:layout_marginEnd="23dp"
+                        android:layout_marginEnd="10dp"
                         android:layout_marginBottom="10dp"
                         android:background="@drawable/hanfia_backgound"
                         android:elevation="8dp"
@@ -330,7 +352,7 @@
                     app:layout_constraintTop_toBottomOf="@+id/relativeLayout2" />
 
 
-                <LinearLayout
+                <RelativeLayout
                     android:id="@+id/alarm_Layout"
                     android:layout_width="match_parent"
                     android:layout_height="50dp"
@@ -339,23 +361,28 @@
                     android:gravity="center"
                     android:orientation="horizontal"
                     app:layout_constraintTop_toBottomOf="@+id/textView12"
-                    tools:layout_editor_absoluteX="10dp">
+                    >
 
 
                     <ImageView
+                        android:id="@+id/image1"
                         android:layout_width="30dp"
                         android:layout_height="30dp"
-                        android:layout_centerInParent="true"
+                        android:layout_alignParentStart="true"
                         android:layout_gravity="center"
-                        android:layout_marginStart="10dp"
-                        android:padding="5dp"
+                        android:layout_marginStart="14dp"
+                        android:layout_marginTop="14dp"
+                        android:layout_marginEnd="7dp"
+                        android:layout_marginBottom="14dp"
                         android:src="@drawable/moon_icon" />
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="10dp"
-                        android:layout_marginEnd="40dp"
+                        android:layout_alignParentTop="true"
+                        android:layout_alignParentBottom="true"
+                        android:layout_toEndOf="@+id/image1"
+                        android:gravity="center"
                         android:fontFamily="@font/montserrat"
                         android:text="Sehri Time"
                         android:textColor="#16225F"
@@ -366,7 +393,10 @@
                         android:id="@+id/sehriTime2"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginHorizontal="10dp"
+                        android:layout_alignParentTop="true"
+                        android:layout_alignParentBottom="true"
+                        android:gravity="center"
+                        android:layout_toStartOf="@+id/sehriTime_alarm"
                         android:fontFamily="@font/montserrat"
                         android:text="-- :- -"
                         android:textColor="#6075E5"
@@ -377,40 +407,45 @@
                         android:id="@+id/sehriTime_alarm"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="10dp"
+                        android:layout_alignParentEnd="true"
+                        android:layout_margin="10dp"
                         android:src="@drawable/baseline_notifications_none_24"
                         tools:ignore="UseSwitchCompatOrMaterialXml" />
 
-                </LinearLayout>
+                </RelativeLayout>
 
 
-                <LinearLayout
+                <RelativeLayout
                     android:id="@+id/iftar_alarm_Layout"
                     android:layout_width="match_parent"
                     android:layout_height="50dp"
                     android:layout_margin="10dp"
                     android:background="@drawable/button_background"
                     android:gravity="center"
-                    android:orientation="horizontal"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintTop_toBottomOf="@+id/alarm_Layout"
-                    tools:layout_editor_absoluteX="10dp">
+                    >
 
 
                     <ImageView
+                        android:id="@+id/image2"
                         android:layout_width="30dp"
                         android:layout_height="30dp"
-                        android:layout_centerInParent="true"
-                        android:layout_gravity="center"
-                        android:layout_marginStart="10dp"
-                        android:padding="5dp"
+                        android:layout_marginStart="14dp"
+                        android:layout_marginTop="14dp"
+                        android:layout_marginEnd="7dp"
+                        android:layout_marginBottom="14dp"
+                        android:layout_alignParentStart="true"
+                        android:layout_centerVertical="true"
                         android:src="@drawable/moon_icon" />
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="10dp"
-                        android:layout_marginEnd="40dp"
+                        android:layout_alignParentTop="true"
+                        android:layout_alignParentBottom="true"
+                        android:layout_toEndOf="@+id/image2"
+                        android:gravity="center"
                         android:fontFamily="@font/montserrat"
                         android:text="Iftar Time"
                         android:textColor="#16225F"
@@ -421,8 +456,11 @@
                         android:id="@+id/iftariTime2"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginHorizontal="10dp"
+                        android:layout_alignParentTop="true"
+                        android:layout_alignParentBottom="true"
+                        android:layout_toStartOf="@+id/iftariTime"
                         android:fontFamily="@font/montserrat"
+                        android:gravity="center"
                         android:text="-- :- -"
                         android:textColor="#6075E5"
                         android:textSize="16sp"
@@ -432,11 +470,13 @@
                         android:id="@+id/iftariTime"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="10dp"
+                        android:layout_alignParentEnd="true"
+                        android:layout_margin="10dp"
+
                         android:src="@drawable/baseline_notifications_none_24"
                         tools:ignore="UseSwitchCompatOrMaterialXml" />
 
-                </LinearLayout>
+                </RelativeLayout>
 
 
             </androidx.constraintlayout.widget.ConstraintLayout>
@@ -444,8 +484,5 @@
 
         </RelativeLayout>
     </ScrollView>
-    <FrameLayout
-        android:id="@+id/alarm_container"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
+
 </RelativeLayout>
